@@ -46,8 +46,8 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <GraduationCap className="h-12 w-12 mx-auto text-blue-600 mb-2" />
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your Sunway Tutoring account</CardDescription>
+          <CardTitle className="text-2xl">Welcome to Tutortots</CardTitle>
+          <CardDescription>Sign in to your Tutortots account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -88,8 +88,8 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <GraduationCap className="h-12 w-12 mx-auto text-blue-600 mb-2" />
-          <CardTitle className="text-2xl">Join Sunway Tutoring</CardTitle>
-          <CardDescription>Create your account to get started</CardDescription>
+          <CardTitle className="text-2xl">Join Tutortots</CardTitle>
+          <CardDescription>Create your Tutortots account to get started</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
