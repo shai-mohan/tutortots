@@ -37,7 +37,7 @@ export default function HomePage() {
             {/* Logo/Brand */}
             <div className="flex items-center space-x-2">
               <GraduationCap className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">Sunway Tutoring</span>
+              <span className="text-xl font-bold text-gray-900">Tutortots</span>
             </div>
 
             {/* Navigation Links */}
@@ -69,7 +69,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Connect with Expert Tutors at Sunway University</h1>
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">Connect with Expert Tutors at Tutortots</h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Enhance your learning experience with qualified tutors from various subjects. Book sessions, get
             personalized help, and achieve academic excellence.
@@ -116,7 +116,7 @@ export default function HomePage() {
               <CardTitle>Peer Learning</CardTitle>
             </CardHeader>
             <CardContent>
-              <CardDescription>Learn from fellow Sunway students who excel in their subjects</CardDescription>
+              <CardDescription>Learn from fellow students who excel in their subjects</CardDescription>
             </CardContent>
           </Card>
 
@@ -152,9 +152,7 @@ export default function HomePage() {
         {/* CTA Section */}
         <div className="text-center bg-blue-600 text-white rounded-lg p-12">
           <h2 className="text-3xl font-bold mb-4">Ready to Start Learning?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join thousands of Sunway students who are already improving their grades
-          </p>
+          <p className="text-xl mb-8 opacity-90">Join thousands of students who are already improving their grades</p>
           <Link href="/register">
             <Button size="lg" variant="secondary" className="px-8 py-3">
               Register Now
@@ -170,7 +168,7 @@ export default function HomePage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <GraduationCap className="h-6 w-6" />
-                <span className="text-lg font-bold">Sunway Tutoring</span>
+                <span className="text-lg font-bold">Tutortots</span>
               </div>
               <p className="text-gray-400">Connecting students with expert tutors for academic success.</p>
             </div>
@@ -215,11 +213,11 @@ export default function HomePage() {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">University</h3>
+              <h3 className="font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <Link href="#" className="hover:text-white">
-                    Sunway University
+                    Blog
                   </Link>
                 </li>
                 <li>
@@ -236,7 +234,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Sunway Tutoring Platform. All rights reserved.</p>
+            <p>&copy; 2024 Tutortots. All rights reserved.</p>
           </div>
         </div>
       </footer>
