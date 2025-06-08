@@ -181,6 +181,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
+        options: {
+          emailRedirectTo: undefined, // Disable email confirmation for institutional emails
+        },
       })
 
       if (error) {
@@ -214,6 +217,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             variant: "destructive",
           })
           return false
+        }
+
+        // Manually confirm email for institutional accounts
+        const { error: confirmError } = await supabase.auth.admin.updateUserById(data.user.id, {
+          email_confirm: true,
+        })
+
+        if (confirmError) {
+          console.log("Email confirmation error:", confirmError)
         }
 
         // Sign out after registration since they need to be verified
