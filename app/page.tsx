@@ -45,7 +45,7 @@ export default function HomePage() {
               <Link href="#features" className="text-gray-600 hover:text-gray-900 transition-colors">
                 Features
               </Link>
-              <Link href="#about" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <Link href="about" className="text-gray-600 hover:text-gray-900 transition-colors">
                 About
               </Link>
               <Link href="#contact" className="text-gray-600 hover:text-gray-900 transition-colors">
