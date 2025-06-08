@@ -100,12 +100,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log("🔐 Starting login for:", email)
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log("🔐 Auth response:", { data, error })
+
       if (error) {
+        console.log("❌ Auth error:", error)
         toast({
           title: "Login failed",
           description: error.message,
@@ -115,10 +120,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
+        console.log("✅ User authenticated, checking verification...")
+
         // Check if user is verified
-        const { data: profile } = await supabase.from("profiles").select("verified").eq("id", data.user.id).single()
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("verified")
+          .eq("id", data.user.id)
+          .single()
+
+        console.log("👤 Profile check:", { profile, profileError })
+
+        if (profileError) {
+          console.log("❌ Profile error:", profileError)
+          toast({
+            title: "Profile check failed",
+            description: profileError.message,
+            variant: "destructive",
+          })
+          await supabase.auth.signOut()
+          return false
+        }
 
         if (!profile || !profile.verified) {
+          console.log("❌ User not verified")
           toast({
             title: "Account not verified",
             description: "Your account is pending approval by an administrator.",
@@ -128,12 +153,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return false
         }
 
+        console.log("✅ Login successful!")
         return true
       }
 
+      console.log("❌ No user data returned")
       return false
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("💥 Login error:", error)
       return false
     }
   }
