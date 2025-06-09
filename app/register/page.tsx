@@ -186,8 +186,8 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 p-4">
+        <Card className="w-full max-w-md border-orange-100 shadow-lg">
           <CardHeader className="text-center">
             <GraduationCap className="h-12 w-12 mx-auto text-green-600 mb-2" />
             <CardTitle className="text-2xl">Registration Successful!</CardTitle>
@@ -195,7 +195,7 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <Link href="/login">
-              <Button className="w-full">Go to Login</Button>
+              <Button className="w-full bg-orange-500 hover:bg-orange-600">Go to Login</Button>
             </Link>
           </CardContent>
         </Card>
@@ -204,10 +204,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 p-4">
+      <Card className="w-full max-w-md border-orange-100 shadow-lg">
         <CardHeader className="text-center">
-          <GraduationCap className="h-12 w-12 mx-auto text-blue-600 mb-2" />
+          <GraduationCap className="h-12 w-12 mx-auto text-orange-500 mb-2" />
           <CardTitle className="text-2xl">Join Tutortots</CardTitle>
           <CardDescription>Create your Tutortots account to get started</CardDescription>
         </CardHeader>
@@ -220,6 +220,7 @@ export default function RegisterPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
               />
             </div>
 
@@ -232,6 +233,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
+                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
               />
             </div>
 
@@ -243,13 +245,14 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
               />
             </div>
 
             <div className="space-y-2">
               <Label>Role</Label>
               <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -263,7 +266,7 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="academicYear">Academic Year</Label>
                 <Select onValueChange={(value) => setFormData({ ...formData, academicYear: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
                     <SelectValue placeholder="Select academic year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -286,6 +289,7 @@ export default function RegisterPage() {
                     value={formData.subjects}
                     onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
                     required
+                    className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                   />
                 </div>
                 <div className="space-y-2">
@@ -295,6 +299,7 @@ export default function RegisterPage() {
                     placeholder="Tell us about your teaching experience..."
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                   />
                 </div>
 
@@ -306,10 +311,10 @@ export default function RegisterPage() {
                   </p>
 
                   {!selectedFile ? (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-300 transition-colors">
                       <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                       <Label htmlFor="file-upload" className="cursor-pointer">
-                        <span className="text-blue-600 hover:text-blue-500">Click to upload</span>
+                        <span className="text-orange-500 hover:text-orange-600">Click to upload</span>
                         <span className="text-gray-600"> or drag and drop</span>
                       </Label>
                       <Input
@@ -324,7 +329,7 @@ export default function RegisterPage() {
                     <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
-                          <FileText className="h-8 w-8 text-blue-600" />
+                          <FileText className="h-8 w-8 text-orange-500" />
                           <div>
                             <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
                             <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
@@ -351,6 +356,7 @@ export default function RegisterPage() {
                 id="terms"
                 checked={formData.acceptTerms}
                 onCheckedChange={(checked) => setFormData({ ...formData, acceptTerms: checked as boolean })}
+                className="text-orange-500 focus:ring-orange-500"
               />
               <Label htmlFor="terms" className="text-sm">
                 I accept the Terms of Service
@@ -363,7 +369,7 @@ export default function RegisterPage() {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={loading}>
               {loading ? "Registering..." : "Register"}
             </Button>
           </form>
@@ -371,11 +377,11 @@ export default function RegisterPage() {
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
+              <Link href="/login" className="text-orange-600 hover:text-orange-700 hover:underline">
                 Sign in here
               </Link>
             </p>
-            <Link href="/" className="text-sm text-gray-500 hover:underline">
+            <Link href="/" className="text-sm text-gray-500 hover:text-orange-600 hover:underline">
               Back to Home
             </Link>
           </div>
