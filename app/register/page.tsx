@@ -32,8 +32,8 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [uploadingFile, setUploadingFile] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [fileBase64, setFileBase64] = useState<string>("")
   const { register } = useAuth()
   const { toast } = useToast()
   const router = useRouter()
@@ -64,48 +64,19 @@ export default function RegisterPage() {
     }
 
     setSelectedFile(file)
+
+    // Convert to base64 for storage
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string
+      setFileBase64(base64)
+    }
+    reader.readAsDataURL(file)
   }
 
   const removeFile = () => {
     setSelectedFile(null)
-  }
-
-  const uploadFile = async (file: File, userId: string): Promise<string | null> => {
-    try {
-      setUploadingFile(true)
-
-      // Create unique filename
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${userId}/qualification.${fileExt}`
-
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage.from("documents").upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: true,
-      })
-
-      if (error) {
-        console.error("Upload error:", error)
-        toast({
-          title: "Upload failed",
-          description: error.message,
-          variant: "destructive",
-        })
-        return null
-      }
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("documents").getPublicUrl(fileName)
-
-      return publicUrl
-    } catch (error) {
-      console.error("Upload error:", error)
-      return null
-    } finally {
-      setUploadingFile(false)
-    }
+    setFileBase64("")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,18 +123,6 @@ export default function RegisterPage() {
       }
 
       if (data.user) {
-        let documentUrl = null
-
-        // Upload qualification document if tutor
-        if (formData.role === "tutor" && selectedFile) {
-          documentUrl = await uploadFile(selectedFile, data.user.id)
-          if (!documentUrl) {
-            setError("Failed to upload qualification document. Please try again.")
-            setLoading(false)
-            return
-          }
-        }
-
         // Create profile record
         const { error: profileError } = await supabase.from("profiles").insert({
           id: data.user.id,
@@ -176,7 +135,7 @@ export default function RegisterPage() {
           bio: formData.bio || null,
           rating: 0,
           total_ratings: 0,
-          qualification_document_url: documentUrl,
+          qualification_document_url: fileBase64 || null,
           qualification_document_name: selectedFile?.name || null,
           qualification_document_type: selectedFile?.type || null,
           qualification_document_size: selectedFile?.size || null,
@@ -193,12 +152,12 @@ export default function RegisterPage() {
         }
 
         // Store document record if uploaded
-        if (documentUrl && selectedFile) {
+        if (fileBase64 && selectedFile) {
           await supabase.from("documents").insert({
             user_id: data.user.id,
             document_type: "qualification",
             file_name: selectedFile.name,
-            file_url: documentUrl,
+            file_url: fileBase64,
             file_type: selectedFile.type,
             file_size: selectedFile.size,
           })
@@ -404,8 +363,8 @@ export default function RegisterPage() {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading || uploadingFile}>
-              {loading ? "Registering..." : uploadingFile ? "Uploading..." : "Register"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Registering..." : "Register"}
             </Button>
           </form>
 

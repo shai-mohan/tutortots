@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { Users, UserCheck, LogOut, CheckCircle, XCircle, FileText, ExternalLink } from "lucide-react"
+import { Users, UserCheck, LogOut, CheckCircle, XCircle, ExternalLink, Eye } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 interface User {
@@ -32,6 +32,11 @@ export default function AdminDashboard() {
   const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedDocument, setSelectedDocument] = useState<{
+    url: string
+    name: string
+    type: string
+  } | null>(null)
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -163,8 +168,28 @@ export default function AdminDashboard() {
     }
   }
 
-  const openDocument = (url: string) => {
-    window.open(url, "_blank")
+  const viewDocument = (url: string, name: string, type: string) => {
+    if (url.startsWith("data:")) {
+      // Base64 document - open in new tab
+      const newWindow = window.open()
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head><title>${name}</title></head>
+            <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f5f5f5;">
+              ${
+                type.includes("pdf")
+                  ? `<embed src="${url}" width="100%" height="100%" type="application/pdf" />`
+                  : `<img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${name}" />`
+              }
+            </body>
+          </html>
+        `)
+      }
+    } else {
+      // Regular URL - open directly
+      window.open(url, "_blank")
+    }
   }
 
   const pendingUsers = users.filter((u) => !u.verified && u.role !== "admin")
@@ -287,10 +312,16 @@ export default function AdminDashboard() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => openDocument(pendingUser.qualificationDocumentUrl!)}
+                                  onClick={() =>
+                                    viewDocument(
+                                      pendingUser.qualificationDocumentUrl!,
+                                      pendingUser.qualificationDocumentName || "Document",
+                                      pendingUser.qualificationDocumentType || "",
+                                    )
+                                  }
                                   className="text-xs"
                                 >
-                                  <FileText className="h-3 w-3 mr-1" />
+                                  <Eye className="h-3 w-3 mr-1" />
                                   {pendingUser.qualificationDocumentName || "View Document"}
                                   <ExternalLink className="h-3 w-3 ml-1" />
                                 </Button>
@@ -375,10 +406,16 @@ export default function AdminDashboard() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => openDocument(verifiedUser.qualificationDocumentUrl!)}
+                                  onClick={() =>
+                                    viewDocument(
+                                      verifiedUser.qualificationDocumentUrl!,
+                                      verifiedUser.qualificationDocumentName || "Document",
+                                      verifiedUser.qualificationDocumentType || "",
+                                    )
+                                  }
                                   className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto"
                                 >
-                                  <FileText className="h-3 w-3 mr-1" />
+                                  <Eye className="h-3 w-3 mr-1" />
                                   View Qualification
                                   <ExternalLink className="h-3 w-3 ml-1" />
                                 </Button>
