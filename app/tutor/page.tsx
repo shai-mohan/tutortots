@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Calendar, User, LogOut, Plus, ExternalLink, CheckCircle, MessageSquare } from "lucide-react"
+import { Calendar, User, LogOut, Plus, ExternalLink, CheckCircle, MessageSquare, Clock } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -253,6 +253,16 @@ export default function TutorDashboard() {
             <div className="hidden md:flex items-center gap-2 text-sm text-blue-gray">
               <span>Welcome, {user.name}</span>
             </div>
+            <Link href="/tutor/availability">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                Availability
+              </Button>
+            </Link>
             <Link href="/tutor/feedback">
               <Button
                 variant="outline"

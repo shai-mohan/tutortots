@@ -24,16 +24,15 @@ interface Tutor {
   profilePhotoUrl?: string
 }
 
-interface Session {
+interface Availability {
   id: string
-  tutorId: string
-  studentId: string
   subject: string
-  date: string
-  time: string
-  status: "scheduled" | "completed" | "cancelled"
-  zoomLink?: string
+  day_of_week: number
+  start_time: string
+  end_time: string
 }
+
+const DAYS_OF_WEEK = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 export default function TutorDetailsPage() {
   const { user } = useAuth()
@@ -41,9 +40,9 @@ export default function TutorDetailsPage() {
   const params = useParams()
   const { toast } = useToast()
   const [tutor, setTutor] = useState<Tutor | null>(null)
+  const [availability, setAvailability] = useState<Availability[]>([])
   const [selectedSubject, setSelectedSubject] = useState("")
-  const [selectedDate, setSelectedDate] = useState("")
-  const [selectedTime, setSelectedTime] = useState("")
+  const [selectedAvailability, setSelectedAvailability] = useState("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -100,6 +99,19 @@ export default function TutorDetailsPage() {
           totalRatings: totalRatings,
           profilePhotoUrl: data.profile_photo_url,
         })
+
+        // Fetch tutor availability
+        const { data: availabilityData, error: availabilityError } = await supabase
+          .from("tutor_availability")
+          .select("*")
+          .eq("tutor_id", params.id)
+          .eq("is_active", true)
+          .order("day_of_week")
+          .order("start_time")
+
+        if (!availabilityError && availabilityData) {
+          setAvailability(availabilityData)
+        }
       } catch (error) {
         console.error("Error fetching tutor:", error)
         router.push("/student")
@@ -112,14 +124,31 @@ export default function TutorDetailsPage() {
   }, [user, router, params.id])
 
   const handleBookSession = async () => {
-    if (!selectedSubject || !selectedDate || !selectedTime) {
+    if (!selectedSubject || !selectedAvailability) {
       toast({
         title: "Missing Information",
-        description: "Please select subject, date, and time",
+        description: "Please select subject and time slot",
         variant: "destructive",
       })
       return
     }
+
+    const availabilitySlot = availability.find((a) => a.id === selectedAvailability)
+    if (!availabilitySlot) {
+      toast({
+        title: "Invalid Selection",
+        description: "Please select a valid time slot",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Calculate next occurrence of the selected day
+    const today = new Date()
+    const targetDay = availabilitySlot.day_of_week
+    const daysUntilTarget = (targetDay - today.getDay() + 7) % 7
+    const sessionDate = new Date(today)
+    sessionDate.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget))
 
     try {
       const { data, error } = await supabase
@@ -128,8 +157,8 @@ export default function TutorDetailsPage() {
           tutor_id: tutor!.id,
           student_id: user!.id,
           subject: selectedSubject,
-          date: selectedDate,
-          time: selectedTime,
+          date: sessionDate.toISOString().split("T")[0],
+          time: availabilitySlot.start_time,
           status: "scheduled",
         })
         .select()
@@ -159,24 +188,31 @@ export default function TutorDetailsPage() {
     }
   }
 
+  const formatTime = (time: string) => {
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+  }
+
+  const getAvailableSlots = () => {
+    if (!selectedSubject) return []
+    return availability.filter((a) => a.subject === selectedSubject)
+  }
+
   if (!tutor && !loading) return null
-
-  // Generate available time slots (simplified)
-  const timeSlots = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00"]
-
-  // Generate next 7 days
-  const availableDates = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date()
-    date.setDate(date.getDate() + i + 1)
-    return date.toISOString().split("T")[0]
-  })
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <Link href="/student">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
@@ -187,64 +223,68 @@ export default function TutorDetailsPage() {
       <main className="container mx-auto px-4 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">Loading tutor details...</p>
+            <p className="text-blue-gray">Loading tutor details...</p>
           </div>
         ) : (
           tutor && (
             <div className="grid lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <Card>
+                <Card className="border-gray-200 shadow-sm">
                   <CardHeader>
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
-                        <AvatarFallback className="text-2xl bg-orange-100 text-orange-600">
+                        <AvatarFallback className="text-2xl bg-orange text-white">
                           {tutor.name.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <CardTitle className="text-2xl">{tutor.name}</CardTitle>
+                        <CardTitle className="text-2xl text-dark-blue-gray">{tutor.name}</CardTitle>
                         <div className="flex items-center gap-1 mt-1">
                           <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                          <span className="text-lg font-medium">{tutor.rating.toFixed(1)}</span>
-                          <span className="text-gray-600">({tutor.totalRatings} reviews)</span>
+                          <span className="text-lg font-medium text-dark-blue-gray">{tutor.rating.toFixed(1)}</span>
+                          <span className="text-blue-gray">({tutor.totalRatings} reviews)</span>
                         </div>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <h3 className="font-semibold text-lg mb-3">Subjects</h3>
+                      <h3 className="font-semibold text-lg mb-3 text-dark-blue-gray">Subjects</h3>
                       <div className="flex flex-wrap gap-2">
                         {tutor.subjects.map((subject) => (
-                          <Badge key={subject} variant="secondary" className="text-sm px-3 py-1">
+                          <Badge
+                            key={subject}
+                            variant="secondary"
+                            className="text-sm px-3 py-1 bg-orange/10 text-orange border-orange/20"
+                          >
                             {subject}
                           </Badge>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg mb-3">About</h3>
-                      <p className="text-gray-700 leading-relaxed">{tutor.bio}</p>
+                      <h3 className="font-semibold text-lg mb-3 text-dark-blue-gray">About</h3>
+                      <p className="text-blue-gray leading-relaxed">{tutor.bio}</p>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
               <div>
-                <Card>
+                <Card className="border-gray-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+                      <Calendar className="h-5 w-5 text-orange" />
                       Book a Session
                     </CardTitle>
-                    <CardDescription>Select your preferred subject, date, and time</CardDescription>
+                    <CardDescription className="text-blue-gray">Select your preferred subject and time</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Subject</label>
-                      <Select onValueChange={setSelectedSubject}>
-                        <SelectTrigger>
+                      <label className="text-sm font-medium mb-2 block text-dark-blue-gray">Subject</label>
+                      <Select onValueChange={setSelectedSubject} value={selectedSubject}>
+                        <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
                           <SelectValue placeholder="Choose subject" />
                         </SelectTrigger>
                         <SelectContent>
@@ -258,42 +298,36 @@ export default function TutorDetailsPage() {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Date</label>
-                      <Select onValueChange={setSelectedDate}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose date" />
+                      <label className="text-sm font-medium mb-2 block text-dark-blue-gray">Available Time Slots</label>
+                      <Select
+                        onValueChange={setSelectedAvailability}
+                        value={selectedAvailability}
+                        disabled={!selectedSubject}
+                      >
+                        <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
+                          <SelectValue placeholder={selectedSubject ? "Choose time slot" : "Select subject first"} />
                         </SelectTrigger>
                         <SelectContent>
-                          {availableDates.map((date) => (
-                            <SelectItem key={date} value={date}>
-                              {new Date(date).toLocaleDateString("en-US", {
-                                weekday: "long",
-                                month: "short",
-                                day: "numeric",
-                              })}
+                          {getAvailableSlots().map((slot) => (
+                            <SelectItem key={slot.id} value={slot.id}>
+                              {DAYS_OF_WEEK[slot.day_of_week]} - {formatTime(slot.start_time)} to{" "}
+                              {formatTime(slot.end_time)}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
+                      {selectedSubject && getAvailableSlots().length === 0 && (
+                        <p className="text-sm text-blue-gray mt-2">
+                          No available time slots for this subject. Please contact the tutor directly.
+                        </p>
+                      )}
                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Time</label>
-                      <Select onValueChange={setSelectedTime}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choose time" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timeSlots.map((time) => (
-                            <SelectItem key={time} value={time}>
-                              {time}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Button onClick={handleBookSession} className="w-full">
+                    <Button
+                      onClick={handleBookSession}
+                      className="w-full bg-orange hover:bg-orange text-white"
+                      disabled={!selectedSubject || !selectedAvailability}
+                    >
                       Book Session
                     </Button>
                   </CardContent>
