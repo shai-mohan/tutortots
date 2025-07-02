@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Star, Search, Calendar, User, LogOut } from "lucide-react"
 import Link from "next/link"
@@ -21,6 +21,7 @@ interface Tutor {
   bio: string
   rating: number
   totalRatings: number
+  profilePhotoUrl?: string
   availability?: string[]
 }
 
@@ -99,6 +100,7 @@ export default function StudentDashboard() {
             bio: tutor.bio || "",
             rating: tutorStats.averageRating,
             totalRatings: tutorStats.totalRatings,
+            profilePhotoUrl: tutor.profile_photo_url,
           }
         })
 
@@ -210,8 +212,9 @@ export default function StudentDashboard() {
               <Card key={tutor.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback>{tutor.name.charAt(0)}</AvatarFallback>
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
+                      <AvatarFallback className="bg-orange-100 text-orange-600">{tutor.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">{tutor.name}</CardTitle>

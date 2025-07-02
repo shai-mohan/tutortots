@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Star, ArrowLeft, Calendar } from "lucide-react"
@@ -21,6 +21,7 @@ interface Tutor {
   bio: string
   rating: number
   totalRatings: number
+  profilePhotoUrl?: string
 }
 
 interface Session {
@@ -97,6 +98,7 @@ export default function TutorDetailsPage() {
           bio: data.bio || "",
           rating: averageRating,
           totalRatings: totalRatings,
+          profilePhotoUrl: data.profile_photo_url,
         })
       } catch (error) {
         console.error("Error fetching tutor:", error)
@@ -194,8 +196,11 @@ export default function TutorDetailsPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center gap-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback className="text-xl">{tutor.name.charAt(0)}</AvatarFallback>
+                      <Avatar className="h-20 w-20">
+                        <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
+                        <AvatarFallback className="text-2xl bg-orange-100 text-orange-600">
+                          {tutor.name.charAt(0)}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
                         <CardTitle className="text-2xl">{tutor.name}</CardTitle>

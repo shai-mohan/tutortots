@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             academicYear: profile.academic_year,
             rating: profile.rating,
             totalRatings: profile.total_ratings,
-            profileImage: profile.profile_image,
+            profileImage: profile.profile_photo_url,
           })
         }
       }
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             academicYear: profile.academic_year,
             rating: profile.rating,
             totalRatings: profile.total_ratings,
-            profileImage: profile.profile_image,
+            profileImage: profile.profile_photo_url,
           })
         }
       } else if (event === "SIGNED_OUT") {
@@ -257,6 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           academic_year: userData.academicYear || user.academicYear,
           subjects: userData.subjects || user.subjects,
           bio: userData.bio || user.bio,
+          profile_photo_url: userData.profileImage !== undefined ? userData.profileImage : user.profileImage,
         })
         .eq("id", user.id)
 
