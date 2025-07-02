@@ -5,11 +5,11 @@ import { useAuth } from "@/components/auth-provider"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, Search, Calendar, User, LogOut, BookOpen, Filter } from "lucide-react"
+import { Star, Search, Calendar, User, LogOut, Filter, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -150,6 +150,35 @@ export default function StudentDashboard() {
 
   if (!user) return null
 
+  // Function to render star rating
+  const renderStars = (rating: number) => {
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating - fullStars >= 0.5
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={`full-${i}`} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)
+    }
+
+    if (hasHalfStar) {
+      stars.push(
+        <div key="half" className="relative">
+          <Star className="h-4 w-4 text-gray-300" />
+          <div className="absolute top-0 left-0 overflow-hidden w-1/2">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+          </div>
+        </div>,
+      )
+    }
+
+    const emptyStars = 5 - stars.length
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-gray-300" />)
+    }
+
+    return stars
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -246,59 +275,87 @@ export default function StudentDashboard() {
         {/* Tutors Grid */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-blue-gray">Loading tutors...</div>
+            <div className="flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-orange border-t-transparent rounded-full animate-spin mr-2"></div>
+              <span className="text-blue-gray">Loading tutors...</span>
+            </div>
           </div>
         ) : (
           <>
             {filteredTutors.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredTutors.map((tutor) => (
-                  <Card key={tutor.id} className="card-clean hover-lift">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12">
+                  <Card
+                    key={tutor.id}
+                    className="overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  >
+                    <div className="h-24 bg-gradient-to-r from-orange/10 to-blue-gray/10 relative">
+                      <div className="absolute -bottom-12 left-6">
+                        <Avatar className="h-24 w-24 border-4 border-white shadow-sm">
                           <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
-                          <AvatarFallback className="bg-orange text-white">{tutor.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback className="bg-orange text-white text-xl font-medium">
+                            {tutor.name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
-                        <div className="flex-1">
-                          <CardTitle className="text-lg text-dark-blue-gray">{tutor.name}</CardTitle>
+                      </div>
+                    </div>
+
+                    <CardHeader className="pt-16 pb-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-xl font-bold text-dark-blue-gray">{tutor.name}</CardTitle>
                           <div className="flex items-center gap-1 mt-1">
-                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                            <span className="text-sm font-medium text-blue-gray">{tutor.rating.toFixed(1)}</span>
-                            <span className="text-xs text-gray-500">({tutor.totalRatings} reviews)</span>
+                            <div className="flex items-center">{renderStars(tutor.rating)}</div>
+                            <span className="text-sm font-medium text-blue-gray ml-1">{tutor.rating.toFixed(1)}</span>
+                            <span className="text-xs text-gray-500">
+                              ({tutor.totalRatings} {tutor.totalRatings === 1 ? "review" : "reviews"})
+                            </span>
                           </div>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <BookOpen className="h-4 w-4 text-orange" />
-                          <span className="text-sm font-medium text-dark-blue-gray">Subjects:</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {tutor.subjects.slice(0, 3).map((subject) => (
-                            <Badge key={subject} variant="secondary" className="text-xs bg-gray-100 text-blue-gray">
-                              {subject}
-                            </Badge>
-                          ))}
-                          {tutor.subjects.length > 3 && (
-                            <Badge variant="outline" className="text-xs text-gray-500">
-                              +{tutor.subjects.length - 3} more
-                            </Badge>
-                          )}
+
+                    <CardContent className="space-y-4 pb-4">
+                      <div className="flex items-start gap-2">
+                        <GraduationCap className="h-4 w-4 text-orange mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="text-sm font-medium text-dark-blue-gray mb-1">Subjects</h4>
+                          <div className="flex flex-wrap gap-1.5">
+                            {tutor.subjects.slice(0, 3).map((subject) => (
+                              <Badge
+                                key={subject}
+                                variant="secondary"
+                                className="text-xs bg-gray-100 text-blue-gray px-2 py-0.5"
+                              >
+                                {subject}
+                              </Badge>
+                            ))}
+                            {tutor.subjects.length > 3 && (
+                              <Badge variant="outline" className="text-xs text-gray-500 px-2 py-0.5">
+                                +{tutor.subjects.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
 
-                      <p className="text-sm text-blue-gray line-clamp-2">{tutor.bio}</p>
+                      <div className="flex items-start gap-2">
+                        <User className="h-4 w-4 text-blue-gray mt-0.5 flex-shrink-0" />
+                        <div>
+                          <h4 className="text-sm font-medium text-dark-blue-gray mb-1">About</h4>
+                          <p className="text-sm text-blue-gray line-clamp-2">{tutor.bio}</p>
+                        </div>
+                      </div>
+                    </CardContent>
 
-                      <Link href={`/student/tutor/${tutor.id}`}>
-                        <Button className="w-full bg-orange hover:bg-orange text-white">
+                    <CardFooter className="pt-0 pb-4">
+                      <Link href={`/student/tutor/${tutor.id}`} className="w-full">
+                        <Button className="w-full bg-orange hover:bg-orange/90 text-white">
                           <Calendar className="h-4 w-4 mr-2" />
-                          View Details & Book
+                          View Profile & Book
                         </Button>
                       </Link>
-                    </CardContent>
+                    </CardFooter>
                   </Card>
                 ))}
               </div>
