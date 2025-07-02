@@ -60,7 +60,7 @@ export default function TutorDashboard() {
 
   useEffect(() => {
     if (!user || user.role !== "tutor") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
@@ -232,13 +232,17 @@ export default function TutorDashboard() {
     }
   }
 
+  const handleLogout = async () => {
+    await logout()
+  }
+
   const upcomingSessions = sessions.filter((s) => s.status === "scheduled")
   const completedSessions = sessions.filter((s) => s.status === "completed")
 
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100">
+    <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Tutor Dashboard</h1>
@@ -267,7 +271,7 @@ export default function TutorDashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={logout}
+              onClick={handleLogout}
               className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
             >
               <LogOut className="h-4 w-4 mr-2" />

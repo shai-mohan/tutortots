@@ -35,7 +35,7 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
@@ -144,6 +144,10 @@ export default function StudentDashboard() {
     return matchesSearch && matchesRating
   })
 
+  const handleLogout = async () => {
+    await logout()
+  }
+
   if (!user) return null
 
   return (
@@ -187,7 +191,7 @@ export default function StudentDashboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={logout}
+                onClick={handleLogout}
                 className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
               >
                 <LogOut className="h-4 w-4 mr-2" />

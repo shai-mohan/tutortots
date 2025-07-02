@@ -92,17 +92,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else if (event === "SIGNED_OUT") {
         setUser(null)
-        // Only redirect to home if we're not already there
-        if (typeof window !== "undefined" && window.location.pathname !== "/") {
-          router.push("/")
-        }
       }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [router])
+  }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -160,10 +156,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         console.log("✅ Login successful!")
-        toast({
-          title: "Welcome back!",
-          description: "You have been successfully logged in.",
-        })
         return true
       }
 
@@ -171,11 +163,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false
     } catch (error) {
       console.error("💥 Login error:", error)
-      toast({
-        title: "Login failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      })
       return false
     }
   }
@@ -245,41 +232,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Sign out after registration since they need to be verified
         await supabase.auth.signOut()
-
-        toast({
-          title: "Registration successful!",
-          description: "Your account has been created and is pending approval by an administrator.",
-        })
-
         return true
       }
 
       return false
     } catch (error) {
       console.error("Registration error:", error)
-      toast({
-        title: "Registration failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      })
       return false
     }
   }
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut()
+      console.log("🚪 Starting logout process...")
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        console.error("❌ Logout error:", error)
+        toast({
+          title: "Logout failed",
+          description: "There was an error logging out. Please try again.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Clear user state
       setUser(null)
 
-      // Force redirect to home page
-      router.replace("/")
+      console.log("✅ Logout successful, redirecting to homepage...")
+
+      // Force redirect to homepage
+      window.location.href = "/"
 
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       })
     } catch (error) {
-      console.error("Logout error:", error)
+      console.error("💥 Logout error:", error)
       toast({
         title: "Logout failed",
         description: "There was an error logging out. Please try again.",
