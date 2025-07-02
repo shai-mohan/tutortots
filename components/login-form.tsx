@@ -3,81 +3,59 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Mail, Lock } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { Eye, EyeOff, Mail, Lock, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface LoginFormProps {
-  onSuccess?: () => void
-  onSwitchToRegister?: () => void
+  onSuccess: () => void
+  onSwitchToRegister: () => void
 }
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
+  const [showPassword, setShowPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError("")
+    setIsLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const success = await login(email, password)
+      if (success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        })
+        onSuccess()
+      }
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
       })
-
-      if (error) {
-        setError(error.message)
-        return
-      }
-
-      if (data.user) {
-        // Get user profile to determine role
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", data.user.id).single()
-
-        if (profile) {
-          // Redirect based on role
-          if (profile.role === "admin") {
-            router.push("/admin")
-          } else if (profile.role === "student") {
-            router.push("/student")
-          } else if (profile.role === "tutor") {
-            router.push("/tutor")
-          }
-        }
-
-        onSuccess?.()
-      }
-    } catch (err) {
-      setError("An unexpected error occurred")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
-    <Card className="w-full border-0 shadow-none">
-      <CardHeader className="text-center pb-4">
+    <Card className="border-0 shadow-none">
+      <CardHeader className="text-center pb-6">
         <CardTitle className="text-2xl font-bold text-dark-blue-gray">Welcome Back</CardTitle>
         <CardDescription className="text-blue-gray">Sign in to your Tutortots account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-700">{error}</AlertDescription>
-            </Alert>
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="email" className="text-dark-blue-gray font-medium">
               Email
@@ -87,11 +65,11 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email"
+                placeholder="your.email@imail.sunway.edu.my"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
                 className="pl-10 border-gray-300 focus:border-orange focus:ring-orange"
+                required
               />
             </div>
           </div>
@@ -104,21 +82,34 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
               <Lock className="absolute left-3 top-3 h-4 w-4 text-blue-gray" />
               <Input
                 id="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 pr-10 border-gray-300 focus:border-orange focus:ring-orange"
                 required
-                className="pl-10 border-gray-300 focus:border-orange focus:ring-orange"
               />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-blue-gray" />
+                ) : (
+                  <Eye className="h-4 w-4 text-blue-gray" />
+                )}
+              </Button>
             </div>
           </div>
 
-          <Button type="submit" className="w-full bg-orange hover:bg-orange text-white" disabled={loading}>
-            {loading ? (
+          <Button type="submit" className="w-full bg-orange hover:bg-orange text-white py-2.5" disabled={isLoading}>
+            {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing In...
+                Signing in...
               </>
             ) : (
               "Sign In"
@@ -129,9 +120,9 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         <div className="mt-6 text-center">
           <p className="text-sm text-blue-gray">
             Don't have an account?{" "}
-            <button onClick={onSwitchToRegister} className="text-orange hover:underline font-medium">
+            <Button variant="link" className="p-0 text-orange hover:text-orange" onClick={onSwitchToRegister}>
               Sign up here
-            </button>
+            </Button>
           </p>
         </div>
       </CardContent>
