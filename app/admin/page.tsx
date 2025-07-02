@@ -32,15 +32,10 @@ export default function AdminDashboard() {
   const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedDocument, setSelectedDocument] = useState<{
-    url: string
-    name: string
-    type: string
-  } | null>(null)
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
@@ -192,6 +187,10 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleLogout = async () => {
+    await logout()
+  }
+
   const pendingUsers = users.filter((u) => !u.verified && u.role !== "admin")
   const verifiedUsers = users.filter((u) => u.verified && u.role !== "admin")
 
@@ -199,12 +198,25 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-dark-blue-gray">Admin Dashboard</h1>
+            <p className="text-sm text-blue-gray">Manage user registrations and approvals</p>
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {user.name}</span>
-            <Button variant="outline" size="sm" onClick={logout}>
+            <div className="hidden md:flex items-center gap-2 text-sm text-blue-gray">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-orange text-white text-xs">{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span>Welcome, {user.name}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -214,87 +226,105 @@ export default function AdminDashboard() {
 
       <main className="container mx-auto px-4 py-8">
         {loading ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Loading...</p>
+          <div className="text-center py-12">
+            <div className="text-blue-gray">Loading dashboard...</div>
           </div>
         ) : (
           <div className="grid lg:grid-cols-4 gap-6 mb-8">
-            <Card>
+            <Card className="border-gray-200 shadow-sm">
               <CardContent className="p-6">
-                <div className="text-2xl font-bold text-orange-600">{pendingUsers.length}</div>
-                <p className="text-sm text-gray-600">Pending Approvals</p>
+                <div className="text-2xl font-bold text-orange">{pendingUsers.length}</div>
+                <p className="text-sm text-blue-gray">Pending Approvals</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-gray-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="text-2xl font-bold text-green-600">{verifiedUsers.length}</div>
-                <p className="text-sm text-gray-600">Verified Users</p>
+                <p className="text-sm text-blue-gray">Verified Users</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-gray-200 shadow-sm">
               <CardContent className="p-6">
                 <div className="text-2xl font-bold text-blue-600">
                   {verifiedUsers.filter((u) => u.role === "student").length}
                 </div>
-                <p className="text-sm text-gray-600">Students</p>
+                <p className="text-sm text-blue-gray">Students</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-gray-200 shadow-sm">
               <CardContent className="p-6">
-                <div className="text-2xl font-bold text-purple-600">
+                <div className="text-2xl font-bold text-dark-blue-gray">
                   {verifiedUsers.filter((u) => u.role === "tutor").length}
                 </div>
-                <p className="text-sm text-gray-600">Tutors</p>
+                <p className="text-sm text-blue-gray">Tutors</p>
               </CardContent>
             </Card>
           </div>
         )}
 
         <Tabs defaultValue="pending" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="pending">Pending Approvals</TabsTrigger>
-            <TabsTrigger value="verified">Verified Users</TabsTrigger>
+          <TabsList className="bg-white border border-gray-200">
+            <TabsTrigger value="pending" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+              Pending Approvals
+            </TabsTrigger>
+            <TabsTrigger value="verified" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+              Verified Users
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pending">
-            <Card>
+            <Card className="border-gray-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <UserCheck className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+                  <UserCheck className="h-5 w-5 text-orange" />
                   Pending User Approvals
                 </CardTitle>
-                <CardDescription>Review and approve new user registrations</CardDescription>
+                <CardDescription className="text-blue-gray">Review and approve new user registrations</CardDescription>
               </CardHeader>
               <CardContent>
                 {pendingUsers.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">No pending approvals</p>
+                    <p className="text-blue-gray">No pending approvals</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {pendingUsers.map((pendingUser) => (
-                      <div key={pendingUser.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={pendingUser.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
+                      >
                         <div className="flex items-center gap-4">
-                          <Avatar>
-                            <AvatarFallback>{pendingUser.name.charAt(0)}</AvatarFallback>
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-orange text-white">
+                              {pendingUser.name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-medium">{pendingUser.name}</h3>
-                            <p className="text-sm text-gray-600">{pendingUser.email}</p>
+                            <h3 className="font-medium text-dark-blue-gray">{pendingUser.name}</h3>
+                            <p className="text-sm text-blue-gray">{pendingUser.email}</p>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge variant={pendingUser.role === "student" ? "default" : "secondary"}>
+                              <Badge
+                                variant={pendingUser.role === "student" ? "default" : "secondary"}
+                                className="bg-gray-100 text-blue-gray"
+                              >
                                 {pendingUser.role}
                               </Badge>
                               {pendingUser.role === "student" && pendingUser.academicYear && (
-                                <Badge variant="outline">{pendingUser.academicYear}</Badge>
+                                <Badge variant="outline" className="border-gray-300 text-blue-gray">
+                                  {pendingUser.academicYear}
+                                </Badge>
                               )}
                             </div>
                             {pendingUser.role === "tutor" && pendingUser.subjects && (
                               <div className="mt-2">
-                                <p className="text-xs text-gray-500 mb-1">Subjects:</p>
+                                <p className="text-xs text-blue-gray mb-1">Subjects:</p>
                                 <div className="flex flex-wrap gap-1">
                                   {pendingUser.subjects.map((subject) => (
-                                    <Badge key={subject} variant="outline" className="text-xs">
+                                    <Badge
+                                      key={subject}
+                                      variant="outline"
+                                      className="text-xs border-gray-300 text-blue-gray"
+                                    >
                                       {subject}
                                     </Badge>
                                   ))}
@@ -302,13 +332,13 @@ export default function AdminDashboard() {
                               </div>
                             )}
                             {pendingUser.bio && (
-                              <p className="text-sm text-gray-600 mt-2 max-w-md">{pendingUser.bio}</p>
+                              <p className="text-sm text-blue-gray mt-2 max-w-md line-clamp-2">{pendingUser.bio}</p>
                             )}
 
                             {/* Qualification Document */}
                             {pendingUser.role === "tutor" && pendingUser.qualificationDocumentUrl && (
                               <div className="mt-2">
-                                <p className="text-xs text-gray-500 mb-1">Qualification Document:</p>
+                                <p className="text-xs text-blue-gray mb-1">Qualification Document:</p>
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -319,7 +349,7 @@ export default function AdminDashboard() {
                                       pendingUser.qualificationDocumentType || "",
                                     )
                                   }
-                                  className="text-xs"
+                                  className="text-xs border-gray-300 text-blue-gray hover:bg-gray-50"
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
                                   {pendingUser.qualificationDocumentName || "View Document"}
@@ -333,7 +363,7 @@ export default function AdminDashboard() {
                           <Button
                             size="sm"
                             onClick={() => approveUser(pendingUser.id)}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-700 text-white"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Approve
@@ -352,47 +382,61 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="verified">
-            <Card>
+            <Card className="border-gray-200 shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+                  <Users className="h-5 w-5 text-orange" />
                   Verified Users
                 </CardTitle>
-                <CardDescription>All verified users in the system</CardDescription>
+                <CardDescription className="text-blue-gray">All verified users in the system</CardDescription>
               </CardHeader>
               <CardContent>
                 {verifiedUsers.length === 0 ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">No verified users</p>
+                    <p className="text-blue-gray">No verified users</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {verifiedUsers.map((verifiedUser) => (
-                      <div key={verifiedUser.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={verifiedUser.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
+                      >
                         <div className="flex items-center gap-4">
-                          <Avatar>
-                            <AvatarFallback>{verifiedUser.name.charAt(0)}</AvatarFallback>
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-orange text-white">
+                              {verifiedUser.name.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-medium">{verifiedUser.name}</h3>
-                            <p className="text-sm text-gray-600">{verifiedUser.email}</p>
+                            <h3 className="font-medium text-dark-blue-gray">{verifiedUser.name}</h3>
+                            <p className="text-sm text-blue-gray">{verifiedUser.email}</p>
                             <div className="flex items-center gap-2 mt-1">
-                              <Badge variant={verifiedUser.role === "student" ? "default" : "secondary"}>
+                              <Badge
+                                variant={verifiedUser.role === "student" ? "default" : "secondary"}
+                                className="bg-gray-100 text-blue-gray"
+                              >
                                 {verifiedUser.role}
                               </Badge>
-                              <Badge variant="outline" className="text-green-600">
+                              <Badge variant="outline" className="text-green-600 border-green-200">
                                 Verified
                               </Badge>
                               {verifiedUser.role === "student" && verifiedUser.academicYear && (
-                                <Badge variant="outline">{verifiedUser.academicYear}</Badge>
+                                <Badge variant="outline" className="border-gray-300 text-blue-gray">
+                                  {verifiedUser.academicYear}
+                                </Badge>
                               )}
                             </div>
                             {verifiedUser.role === "tutor" && verifiedUser.subjects && (
                               <div className="mt-2">
-                                <p className="text-xs text-gray-500 mb-1">Subjects:</p>
+                                <p className="text-xs text-blue-gray mb-1">Subjects:</p>
                                 <div className="flex flex-wrap gap-1">
                                   {verifiedUser.subjects.map((subject) => (
-                                    <Badge key={subject} variant="outline" className="text-xs">
+                                    <Badge
+                                      key={subject}
+                                      variant="outline"
+                                      className="text-xs border-gray-300 text-blue-gray"
+                                    >
                                       {subject}
                                     </Badge>
                                   ))}
