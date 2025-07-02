@@ -37,6 +37,12 @@ interface Student {
   email: string
 }
 
+interface FeedbackStats {
+  totalFeedback: number
+  averageRating: number
+  totalRatings: number
+}
+
 export default function TutorDashboard() {
   const { user, logout } = useAuth()
   const router = useRouter()
@@ -46,6 +52,11 @@ export default function TutorDashboard() {
   const [zoomLink, setZoomLink] = useState("")
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats>({
+    totalFeedback: 0,
+    averageRating: 0,
+    totalRatings: 0,
+  })
 
   useEffect(() => {
     if (!user || user.role !== "tutor") {
@@ -78,6 +89,33 @@ export default function TutorDashboard() {
           console.error("Error fetching students:", studentError)
           return
         }
+
+        // Fetch feedback statistics
+        const { data: feedbackData, error: feedbackError } = await supabase
+          .from("feedback")
+          .select(`
+        rating,
+        sessions!inner (
+          tutor_id
+        )
+      `)
+          .eq("sessions.tutor_id", user.id)
+
+        if (feedbackError) {
+          console.error("Error fetching feedback:", feedbackError)
+        }
+
+        // Calculate feedback statistics
+        const totalFeedback = feedbackData?.length || 0
+        const ratingsOnly = feedbackData?.filter((f) => f.rating !== null).map((f) => f.rating!) || []
+        const totalRatings = ratingsOnly.length
+        const averageRating = totalRatings > 0 ? ratingsOnly.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
+
+        setFeedbackStats({
+          totalFeedback,
+          averageRating,
+          totalRatings,
+        })
 
         // Create a map of student IDs to names
         const studentMap: Record<string, string> = {}
@@ -261,13 +299,13 @@ export default function TutorDashboard() {
               </Card>
               <Card className="border-orange-100">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-yellow-600">{user.rating?.toFixed(1) || "0.0"}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{feedbackStats.averageRating.toFixed(1)}</div>
                   <p className="text-sm text-gray-600">Average Rating</p>
                 </CardContent>
               </Card>
               <Card className="border-orange-100">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-purple-600">{user.totalRatings || 0}</div>
+                  <div className="text-2xl font-bold text-purple-600">{feedbackStats.totalRatings}</div>
                   <p className="text-sm text-gray-600">Total Reviews</p>
                 </CardContent>
               </Card>

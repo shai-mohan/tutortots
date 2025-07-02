@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, User, Save, Star } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 export default function TutorProfile() {
   const { user, updateUser } = useAuth()
@@ -25,11 +26,49 @@ export default function TutorProfile() {
     bio: "",
   })
 
+  // Add this state for feedback stats
+  const [feedbackStats, setFeedbackStats] = useState({
+    averageRating: 0,
+    totalRatings: 0,
+  })
+
+  // Replace the useEffect with this updated version that fetches real feedback data
   useEffect(() => {
     if (!user || user.role !== "tutor") {
       router.push("/login")
       return
     }
+
+    // Fetch real feedback statistics
+    const fetchFeedbackStats = async () => {
+      try {
+        const { data: feedbackData, error } = await supabase
+          .from("feedback")
+          .select(`
+          rating,
+          sessions!inner (
+            tutor_id
+          )
+        `)
+          .eq("sessions.tutor_id", user.id)
+
+        if (!error && feedbackData) {
+          const ratingsOnly = feedbackData.filter((f) => f.rating !== null).map((f) => f.rating!)
+          const totalRatings = ratingsOnly.length
+          const averageRating =
+            totalRatings > 0 ? ratingsOnly.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
+
+          setFeedbackStats({
+            averageRating,
+            totalRatings,
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching feedback stats:", error)
+      }
+    }
+
+    fetchFeedbackStats()
 
     setFormData({
       name: user.name,
@@ -137,18 +176,20 @@ export default function TutorProfile() {
             </CardHeader>
             <CardContent>
               <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-yellow-600">{user.rating?.toFixed(1) || "0.0"}</div>
+                <div className="text-3xl font-bold text-yellow-600">{feedbackStats.averageRating.toFixed(1)}</div>
                 <div className="flex justify-center">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.floor(user.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                        i < Math.floor(feedbackStats.averageRating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
                       }`}
                     />
                   ))}
                 </div>
-                <p className="text-gray-600">Based on {user.totalRatings || 0} reviews</p>
+                <p className="text-gray-600">Based on {feedbackStats.totalRatings} reviews</p>
               </div>
             </CardContent>
           </Card>

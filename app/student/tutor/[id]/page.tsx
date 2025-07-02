@@ -69,14 +69,34 @@ export default function TutorDetailsPage() {
           return
         }
 
+        // Fetch real feedback data for this tutor
+        const { data: feedbackData, error: feedbackError } = await supabase
+          .from("feedback")
+          .select(`
+        rating,
+        sessions!inner (
+          tutor_id
+        )
+      `)
+          .eq("sessions.tutor_id", params.id)
+
+        let averageRating = 0
+        let totalRatings = 0
+
+        if (!feedbackError && feedbackData) {
+          const ratingsOnly = feedbackData.filter((f) => f.rating !== null).map((f) => f.rating!)
+          totalRatings = ratingsOnly.length
+          averageRating = totalRatings > 0 ? ratingsOnly.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
+        }
+
         setTutor({
           id: data.id,
           name: data.name,
           email: data.email,
           subjects: data.subjects || [],
           bio: data.bio || "",
-          rating: data.rating || 0,
-          totalRatings: data.total_ratings || 0,
+          rating: averageRating,
+          totalRatings: totalRatings,
         })
       } catch (error) {
         console.error("Error fetching tutor:", error)

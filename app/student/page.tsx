@@ -49,15 +49,58 @@ export default function StudentDashboard() {
           return
         }
 
-        const formattedTutors = data.map((tutor) => ({
-          id: tutor.id,
-          name: tutor.name,
-          email: tutor.email,
-          subjects: tutor.subjects || [],
-          bio: tutor.bio || "",
-          rating: tutor.rating || 0,
-          totalRatings: tutor.total_ratings || 0,
-        }))
+        // Fetch all feedback to calculate real ratings
+        const { data: allFeedback, error: feedbackError } = await supabase.from("feedback").select(`
+        rating,
+        sessions!inner (
+          tutor_id
+        )
+      `)
+
+        if (feedbackError) {
+          console.error("Error fetching feedback:", feedbackError)
+        }
+
+        // Calculate ratings for each tutor
+        const tutorRatings: Record<string, { averageRating: number; totalRatings: number }> = {}
+
+        if (allFeedback) {
+          // Group feedback by tutor
+          const feedbackByTutor: Record<string, number[]> = {}
+
+          allFeedback.forEach((feedback) => {
+            const tutorId = feedback.sessions.tutor_id
+            if (feedback.rating) {
+              if (!feedbackByTutor[tutorId]) {
+                feedbackByTutor[tutorId] = []
+              }
+              feedbackByTutor[tutorId].push(feedback.rating)
+            }
+          })
+
+          // Calculate averages
+          Object.keys(feedbackByTutor).forEach((tutorId) => {
+            const ratings = feedbackByTutor[tutorId]
+            const totalRatings = ratings.length
+            const averageRating = totalRatings > 0 ? ratings.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
+
+            tutorRatings[tutorId] = { averageRating, totalRatings }
+          })
+        }
+
+        const formattedTutors = data.map((tutor) => {
+          const tutorStats = tutorRatings[tutor.id] || { averageRating: 0, totalRatings: 0 }
+
+          return {
+            id: tutor.id,
+            name: tutor.name,
+            email: tutor.email,
+            subjects: tutor.subjects || [],
+            bio: tutor.bio || "",
+            rating: tutorStats.averageRating,
+            totalRatings: tutorStats.totalRatings,
+          }
+        })
 
         setTutors(formattedTutors)
       } catch (error) {
