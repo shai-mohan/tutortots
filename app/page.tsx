@@ -8,8 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GraduationCap, Users, Calendar, Star, BookOpen, Shield, Clock, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { LoginForm } from "@/components/auth/login-form"
-import { RegisterForm } from "@/components/auth/register-form"
+import { LoginForm } from "@/components/login-form"
+import { RegisterForm } from "@/components/register-form"
 
 export default function HomePage() {
   const { user } = useAuth()
