@@ -45,7 +45,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 p-4">
       <Card className="w-full max-w-md border-orange-100 shadow-lg">
         <CardHeader className="text-center">
-          <GraduationCap className="h-12 w-12 mx-auto text-orange-500 mb-2" />
+          <GraduationCap className="h-12 w-12 mx-auto mb-2" style={{ color: "#FFA500" }} />
           <CardTitle className="text-2xl">Welcome to Tutortots</CardTitle>
           <CardDescription>Sign in to your Tutortots account</CardDescription>
         </CardHeader>
@@ -60,7 +60,8 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                className="border-gray-300 focus:border-orange-custom focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                style={{ "--tw-ring-color": "#FFA500" } as React.CSSProperties}
               />
             </div>
             <div className="space-y-2">
@@ -71,7 +72,8 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                className="border-gray-300 focus:border-orange-custom focus:ring focus:ring-orange-200 focus:ring-opacity-50"
+                style={{ "--tw-ring-color": "#FFA500" } as React.CSSProperties}
               />
             </div>
             {error && (
@@ -79,18 +81,18 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={loading}>
+            <Button type="submit" className="w-full bg-orange-custom hover:bg-orange-600" disabled={loading}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
-              <Link href="/register" className="text-orange-600 hover:text-orange-700 hover:underline">
+              <Link href="/register" className="text-orange-custom hover:text-orange-700 hover:underline">
                 Register here
               </Link>
             </p>
-            <Link href="/" className="text-sm text-gray-500 hover:text-orange-600 hover:underline">
+            <Link href="/" className="text-sm text-gray-500 hover:text-orange-custom hover:underline">
               Back to Home
             </Link>
           </div>

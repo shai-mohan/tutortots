@@ -106,7 +106,7 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Star className="h-5 w-5 text-orange-500" />
+          <Star className="h-5 w-5" style={{ color: "#FFA500" }} />
           Leave Feedback
         </CardTitle>
         <CardDescription>
@@ -129,10 +129,11 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
                 >
                   <Star
                     className={`h-6 w-6 transition-colors ${
-                      i < (hoveredRating || rating)
-                        ? "fill-orange-400 text-orange-400"
-                        : "text-gray-300 hover:text-orange-300"
+                      i < (hoveredRating || rating) ? "text-orange-400" : "text-gray-300 hover:text-orange-300"
                     }`}
+                    style={{
+                      fill: i < (hoveredRating || rating) ? "#FFA500" : "transparent",
+                    }}
                   />
                 </button>
               ))}
@@ -154,7 +155,8 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}
-              className="resize-none focus:ring-orange-500 focus:border-orange-500"
+              className="resize-none focus:ring-orange-custom focus:border-orange-custom"
+              style={{ "--tw-ring-color": "#FFA500" } as React.CSSProperties}
             />
             <p className="text-xs text-gray-500 mt-1">{comment.length}/500 characters</p>
           </div>
@@ -162,7 +164,7 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
           <Button
             type="submit"
             disabled={isSubmitting || (rating === 0 && comment.trim() === "")}
-            className="w-full bg-orange-500 hover:bg-orange-600"
+            className="w-full bg-orange-custom hover:bg-orange-600"
           >
             {isSubmitting ? (
               "Submitting..."

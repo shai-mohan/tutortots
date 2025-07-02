@@ -1,32 +1,21 @@
--- Update feedback table to include comment field and make rating optional for text-only feedback
+-- Update feedback table to make rating optional and add comment field
 ALTER TABLE feedback 
-ADD COLUMN IF NOT EXISTS comment TEXT,
 ALTER COLUMN rating DROP NOT NULL;
 
--- Add index for better performance
-CREATE INDEX IF NOT EXISTS idx_feedback_tutor_lookup ON feedback(session_id);
+-- Add comment field if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'feedback' AND column_name = 'comment') THEN
+        ALTER TABLE feedback ADD COLUMN comment TEXT;
+    END IF;
+END $$;
 
--- Update RLS policies for feedback
-DROP POLICY IF EXISTS "Students can create feedback for completed sessions" ON feedback;
-DROP POLICY IF EXISTS "Users can view feedback for their sessions" ON feedback;
+-- Update the check constraint to allow either rating or comment (or both)
+ALTER TABLE feedback DROP CONSTRAINT IF EXISTS feedback_rating_check;
+ALTER TABLE feedback ADD CONSTRAINT feedback_content_check 
+CHECK (rating IS NOT NULL OR comment IS NOT NULL);
 
--- Allow students to create feedback for their completed sessions
-CREATE POLICY "Students can create feedback for completed sessions" ON feedback
-  FOR INSERT WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM sessions 
-      WHERE sessions.id = feedback.session_id AND 
-      sessions.student_id = auth.uid() AND
-      sessions.status = 'completed'
-    )
-  );
-
--- Allow tutors and students to view feedback for their sessions
-CREATE POLICY "Users can view feedback for their sessions" ON feedback
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM sessions 
-      WHERE sessions.id = feedback.session_id AND 
-      (sessions.tutor_id = auth.uid() OR sessions.student_id = auth.uid())
-    )
-  );
+-- Create index for better performance
+CREATE INDEX IF NOT EXISTS idx_feedback_session_rating ON feedback(session_id, rating);
+CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at);

@@ -64,3 +64,32 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Custom orange color utilities */
+.text-orange-custom {
+  color: #ffa500;
+}
+
+.bg-orange-custom {
+  background-color: #ffa500;
+}
+
+.border-orange-custom {
+  border-color: #ffa500;
+}
+
+.hover\:bg-orange-custom:hover {
+  background-color: #ffa500;
+}
+
+.hover\:text-orange-custom:hover {
+  color: #ffa500;
+}
+
+.focus\:border-orange-custom:focus {
+  border-color: #ffa500;
+}
+
+.focus\:ring-orange-custom:focus {
+  --tw-ring-color: #ffa500;
+}
