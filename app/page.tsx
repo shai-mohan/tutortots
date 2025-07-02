@@ -1,16 +1,22 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { GraduationCap, Users, Calendar, Star, BookOpen, Shield, Clock, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { LoginForm } from "@/components/auth/login-form"
+import { RegisterForm } from "@/components/auth/register-form"
 
 export default function HomePage() {
   const { user } = useAuth()
   const router = useRouter()
+
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -55,14 +61,16 @@ export default function HomePage() {
 
             {/* Auth Buttons */}
             <div className="flex items-center space-x-4">
-              <Link href="/login">
-                <Button variant="ghost" className="text-blue-gray hover:text-orange">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button className="bg-orange hover:bg-orange text-white">Get Started</Button>
-              </Link>
+              <Button
+                variant="ghost"
+                className="text-blue-gray hover:text-orange"
+                onClick={() => setShowLoginModal(true)}
+              >
+                Sign In
+              </Button>
+              <Button className="bg-orange hover:bg-orange text-white" onClick={() => setShowRegisterModal(true)}>
+                Get Started
+              </Button>
             </div>
           </div>
         </div>
@@ -80,21 +88,23 @@ export default function HomePage() {
               sessions, get expert help, and achieve academic excellence.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <Button size="lg" className="px-8 py-3 bg-orange hover:bg-orange text-white text-lg">
-                  Start Learning Today
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-lg bg-transparent"
-                >
-                  Sign In
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                className="px-8 py-3 bg-orange hover:bg-orange text-white text-lg"
+                onClick={() => setShowRegisterModal(true)}
+              >
+                Start Learning Today
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-lg bg-transparent"
+                onClick={() => setShowLoginModal(true)}
+              >
+                Sign In
+              </Button>
             </div>
           </div>
         </div>
@@ -279,21 +289,23 @@ export default function HomePage() {
               Join thousands of Sunway University students who are already achieving their academic goals.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <Button size="lg" className="px-8 py-3 bg-orange hover:bg-orange text-white text-lg">
-                  Get Started Today
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-lg bg-transparent"
-                >
-                  Sign In
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                className="px-8 py-3 bg-orange hover:bg-orange text-white text-lg"
+                onClick={() => setShowRegisterModal(true)}
+              >
+                Get Started Today
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+
+              <Button
+                size="lg"
+                variant="outline"
+                className="px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-lg bg-transparent"
+                onClick={() => setShowLoginModal(true)}
+              >
+                Sign In
+              </Button>
             </div>
           </div>
         </div>
@@ -383,6 +395,31 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+      {/* Login Modal */}
+      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
+        <DialogContent className="sm:max-w-md">
+          <LoginForm
+            onSuccess={() => setShowLoginModal(false)}
+            onSwitchToRegister={() => {
+              setShowLoginModal(false)
+              setShowRegisterModal(true)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Register Modal */}
+      <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <RegisterForm
+            onSuccess={() => setShowRegisterModal(false)}
+            onSwitchToLogin={() => {
+              setShowRegisterModal(false)
+              setShowLoginModal(true)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
