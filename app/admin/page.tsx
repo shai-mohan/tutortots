@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { Users, UserCheck, LogOut, CheckCircle, XCircle } from "lucide-react"
+import { Users, UserCheck, LogOut, CheckCircle, XCircle, ExternalLink, Eye } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 interface User {
@@ -21,6 +21,9 @@ interface User {
   subjects?: string[]
   bio?: string
   academicYear?: string
+  qualificationDocumentUrl?: string
+  qualificationDocumentName?: string
+  qualificationDocumentType?: string
 }
 
 export default function AdminDashboard() {
@@ -29,45 +32,16 @@ export default function AdminDashboard() {
   const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedDocument, setSelectedDocument] = useState<{
+    url: string
+    name: string
+    type: string
+  } | null>(null)
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
       router.push("/login")
       return
-    }
-
-    // Initialize admin user if not exists
-    const initializeAdmin = async () => {
-      const { data: adminExists } = await supabase.from("profiles").select("id").eq("role", "admin").single()
-
-      if (!adminExists) {
-        // Create admin user in auth
-        const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-          email: "admin@imail.sunway.edu.my",
-          password: "admin123",
-          email_confirm: true,
-        })
-
-        if (authError) {
-          console.error("Error creating admin auth user:", authError)
-          return
-        }
-
-        // Create admin profile
-        if (authUser.user) {
-          const { error: profileError } = await supabase.from("profiles").insert({
-            id: authUser.user.id,
-            name: "Admin",
-            email: "admin@imail.sunway.edu.my",
-            role: "admin",
-            verified: true,
-          })
-
-          if (profileError) {
-            console.error("Error creating admin profile:", profileError)
-          }
-        }
-      }
     }
 
     // Fetch all users
@@ -91,6 +65,9 @@ export default function AdminDashboard() {
             subjects: profile.subjects,
             bio: profile.bio,
             academicYear: profile.academic_year,
+            qualificationDocumentUrl: profile.qualification_document_url,
+            qualificationDocumentName: profile.qualification_document_name,
+            qualificationDocumentType: profile.qualification_document_type,
           })),
         )
       } catch (error) {
@@ -100,7 +77,7 @@ export default function AdminDashboard() {
       }
     }
 
-    initializeAdmin().then(fetchUsers)
+    fetchUsers()
 
     // Set up real-time subscription for profile updates
     const subscription = supabase
@@ -188,6 +165,30 @@ export default function AdminDashboard() {
         description: "An unexpected error occurred",
         variant: "destructive",
       })
+    }
+  }
+
+  const viewDocument = (url: string, name: string, type: string) => {
+    if (url.startsWith("data:")) {
+      // Base64 document - open in new tab
+      const newWindow = window.open()
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head><title>${name}</title></head>
+            <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f5f5f5;">
+              ${
+                type.includes("pdf")
+                  ? `<embed src="${url}" width="100%" height="100%" type="application/pdf" />`
+                  : `<img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain;" alt="${name}" />`
+              }
+            </body>
+          </html>
+        `)
+      }
+    } else {
+      // Regular URL - open directly
+      window.open(url, "_blank")
     }
   }
 
@@ -303,6 +304,29 @@ export default function AdminDashboard() {
                             {pendingUser.bio && (
                               <p className="text-sm text-gray-600 mt-2 max-w-md">{pendingUser.bio}</p>
                             )}
+
+                            {/* Qualification Document */}
+                            {pendingUser.role === "tutor" && pendingUser.qualificationDocumentUrl && (
+                              <div className="mt-2">
+                                <p className="text-xs text-gray-500 mb-1">Qualification Document:</p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    viewDocument(
+                                      pendingUser.qualificationDocumentUrl!,
+                                      pendingUser.qualificationDocumentName || "Document",
+                                      pendingUser.qualificationDocumentType || "",
+                                    )
+                                  }
+                                  className="text-xs"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  {pendingUser.qualificationDocumentName || "View Document"}
+                                  <ExternalLink className="h-3 w-3 ml-1" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -373,6 +397,28 @@ export default function AdminDashboard() {
                                     </Badge>
                                   ))}
                                 </div>
+                              </div>
+                            )}
+
+                            {/* Qualification Document for verified tutors */}
+                            {verifiedUser.role === "tutor" && verifiedUser.qualificationDocumentUrl && (
+                              <div className="mt-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() =>
+                                    viewDocument(
+                                      verifiedUser.qualificationDocumentUrl!,
+                                      verifiedUser.qualificationDocumentName || "Document",
+                                      verifiedUser.qualificationDocumentType || "",
+                                    )
+                                  }
+                                  className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto"
+                                >
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  View Qualification
+                                  <ExternalLink className="h-3 w-3 ml-1" />
+                                </Button>
                               </div>
                             )}
                           </div>

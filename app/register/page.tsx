@@ -13,8 +13,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { GraduationCap } from "lucide-react"
+import { GraduationCap, Upload, FileText, X } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
+import { useToast } from "@/hooks/use-toast"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -30,8 +32,52 @@ export default function RegisterPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [fileBase64, setFileBase64] = useState<string>("")
   const { register } = useAuth()
+  const { toast } = useToast()
   const router = useRouter()
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"]
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF, JPEG, or PNG file",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload a file smaller than 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setSelectedFile(file)
+
+    // Convert to base64 for storage
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string
+      setFileBase64(base64)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    setFileBase64("")
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,24 +96,98 @@ export default function RegisterPage() {
       return
     }
 
-    const userData = {
-      ...formData,
-      subjects: formData.role === "tutor" ? formData.subjects.split(",").map((s) => s.trim()) : undefined,
+    if (formData.role === "tutor" && !selectedFile) {
+      setError("Please upload your qualification document")
+      setLoading(false)
+      return
     }
 
-    const success = await register(userData)
-    if (success) {
-      setSuccess(true)
-    } else {
+    try {
+      // Register user with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: undefined,
+        },
+      })
+
+      if (error) {
+        toast({
+          title: "Registration failed",
+          description: error.message,
+          variant: "destructive",
+        })
+        setLoading(false)
+        return
+      }
+
+      if (data.user) {
+        // Create profile record
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: data.user.id,
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          verified: false,
+          academic_year: formData.academicYear || null,
+          subjects: formData.role === "tutor" ? formData.subjects.split(",").map((s) => s.trim()) : null,
+          bio: formData.bio || null,
+          rating: 0,
+          total_ratings: 0,
+          qualification_document_url: fileBase64 || null,
+          qualification_document_name: selectedFile?.name || null,
+          qualification_document_type: selectedFile?.type || null,
+          qualification_document_size: selectedFile?.size || null,
+        })
+
+        if (profileError) {
+          toast({
+            title: "Profile creation failed",
+            description: profileError.message,
+            variant: "destructive",
+          })
+          setLoading(false)
+          return
+        }
+
+        // Store document record if uploaded
+        if (fileBase64 && selectedFile) {
+          await supabase.from("documents").insert({
+            user_id: data.user.id,
+            document_type: "qualification",
+            file_name: selectedFile.name,
+            file_url: fileBase64,
+            file_type: selectedFile.type,
+            file_size: selectedFile.size,
+          })
+        }
+
+        // Manually confirm email
+        const { error: confirmError } = await supabase.auth.admin.updateUserById(data.user.id, {
+          email_confirm: true,
+        })
+
+        if (confirmError) {
+          console.log("Email confirmation error:", confirmError)
+        }
+
+        // Sign out after registration
+        await supabase.auth.signOut()
+        setSuccess(true)
+      }
+    } catch (error) {
+      console.error("Registration error:", error)
       setError("Registration failed. Please try again.")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 p-4">
+        <Card className="w-full max-w-md border-orange-100 shadow-lg">
           <CardHeader className="text-center">
             <GraduationCap className="h-12 w-12 mx-auto text-green-600 mb-2" />
             <CardTitle className="text-2xl">Registration Successful!</CardTitle>
@@ -75,7 +195,7 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <Link href="/login">
-              <Button className="w-full">Go to Login</Button>
+              <Button className="w-full bg-orange-500 hover:bg-orange-600">Go to Login</Button>
             </Link>
           </CardContent>
         </Card>
@@ -84,12 +204,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100 p-4">
+      <Card className="w-full max-w-md border-orange-100 shadow-lg">
         <CardHeader className="text-center">
-          <GraduationCap className="h-12 w-12 mx-auto text-blue-600 mb-2" />
-          <CardTitle className="text-2xl">Join Sunway Tutoring</CardTitle>
-          <CardDescription>Create your account to get started</CardDescription>
+          <GraduationCap className="h-12 w-12 mx-auto text-orange-500 mb-2" />
+          <CardTitle className="text-2xl">Join Tutortots</CardTitle>
+          <CardDescription>Create your Tutortots account to get started</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,6 +220,7 @@ export default function RegisterPage() {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
               />
             </div>
 
@@ -112,6 +233,7 @@ export default function RegisterPage() {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
+                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
               />
             </div>
 
@@ -123,13 +245,14 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
               />
             </div>
 
             <div className="space-y-2">
               <Label>Role</Label>
               <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                <SelectTrigger>
+                <SelectTrigger className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,7 +266,7 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="academicYear">Academic Year</Label>
                 <Select onValueChange={(value) => setFormData({ ...formData, academicYear: value })}>
-                  <SelectTrigger>
+                  <SelectTrigger className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50">
                     <SelectValue placeholder="Select academic year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -166,6 +289,7 @@ export default function RegisterPage() {
                     value={formData.subjects}
                     onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
                     required
+                    className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                   />
                 </div>
                 <div className="space-y-2">
@@ -175,7 +299,54 @@ export default function RegisterPage() {
                     placeholder="Tell us about your teaching experience..."
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                    className="border-gray-300 focus:border-orange-300 focus:ring focus:ring-orange-200 focus:ring-opacity-50"
                   />
+                </div>
+
+                {/* Qualification Document Upload */}
+                <div className="space-y-2">
+                  <Label htmlFor="qualification">Qualification Document *</Label>
+                  <p className="text-xs text-gray-600 mb-2">
+                    Upload your transcript, certificate, or other proof of qualification (PDF, JPEG, PNG - Max 5MB)
+                  </p>
+
+                  {!selectedFile ? (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-300 transition-colors">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <Label htmlFor="file-upload" className="cursor-pointer">
+                        <span className="text-orange-500 hover:text-orange-600">Click to upload</span>
+                        <span className="text-gray-600"> or drag and drop</span>
+                      </Label>
+                      <Input
+                        id="file-upload"
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <FileText className="h-8 w-8 text-orange-500" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                            <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={removeFile}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -185,6 +356,7 @@ export default function RegisterPage() {
                 id="terms"
                 checked={formData.acceptTerms}
                 onCheckedChange={(checked) => setFormData({ ...formData, acceptTerms: checked as boolean })}
+                className="text-orange-500 focus:ring-orange-500"
               />
               <Label htmlFor="terms" className="text-sm">
                 I accept the Terms of Service
@@ -197,7 +369,7 @@ export default function RegisterPage() {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={loading}>
               {loading ? "Registering..." : "Register"}
             </Button>
           </form>
@@ -205,11 +377,11 @@ export default function RegisterPage() {
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
+              <Link href="/login" className="text-orange-600 hover:text-orange-700 hover:underline">
                 Sign in here
               </Link>
             </p>
-            <Link href="/" className="text-sm text-gray-500 hover:underline">
+            <Link href="/" className="text-sm text-gray-500 hover:text-orange-600 hover:underline">
               Back to Home
             </Link>
           </div>
