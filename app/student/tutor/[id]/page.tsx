@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { Star, ArrowLeft, Calendar } from "lucide-react"
+import { Star, ArrowLeft, Calendar, Repeat, CalendarDays } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -27,7 +28,9 @@ interface Tutor {
 interface Availability {
   id: string
   subject: string
-  day_of_week: number
+  availability_type: "recurring" | "specific_date"
+  day_of_week?: number
+  specific_date?: string
   start_time: string
   end_time: string
 }
@@ -43,6 +46,7 @@ export default function TutorDetailsPage() {
   const [availability, setAvailability] = useState<Availability[]>([])
   const [selectedSubject, setSelectedSubject] = useState("")
   const [selectedAvailability, setSelectedAvailability] = useState("")
+  const [availabilityType, setAvailabilityType] = useState<"recurring" | "specific_date">("recurring")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -106,7 +110,9 @@ export default function TutorDetailsPage() {
           .select("*")
           .eq("tutor_id", params.id)
           .eq("is_active", true)
+          .order("availability_type")
           .order("day_of_week")
+          .order("specific_date")
           .order("start_time")
 
         if (!availabilityError && availabilityData) {
@@ -143,12 +149,18 @@ export default function TutorDetailsPage() {
       return
     }
 
-    // Calculate next occurrence of the selected day
-    const today = new Date()
-    const targetDay = availabilitySlot.day_of_week
-    const daysUntilTarget = (targetDay - today.getDay() + 7) % 7
-    const sessionDate = new Date(today)
-    sessionDate.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget))
+    let sessionDate: Date
+
+    if (availabilitySlot.availability_type === "specific_date") {
+      sessionDate = new Date(availabilitySlot.specific_date!)
+    } else {
+      // Calculate next occurrence of the selected day for recurring availability
+      const today = new Date()
+      const targetDay = availabilitySlot.day_of_week!
+      const daysUntilTarget = (targetDay - today.getDay() + 7) % 7
+      sessionDate = new Date(today)
+      sessionDate.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget))
+    }
 
     try {
       const { data, error } = await supabase
@@ -196,9 +208,26 @@ export default function TutorDetailsPage() {
     })
   }
 
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
   const getAvailableSlots = () => {
     if (!selectedSubject) return []
-    return availability.filter((a) => a.subject === selectedSubject)
+    return availability.filter((a) => a.subject === selectedSubject && a.availability_type === availabilityType)
+  }
+
+  const getRecurringSlots = () => {
+    return availability.filter((a) => a.subject === selectedSubject && a.availability_type === "recurring")
+  }
+
+  const getSpecificDateSlots = () => {
+    return availability.filter((a) => a.subject === selectedSubject && a.availability_type === "specific_date")
   }
 
   if (!tutor && !loading) return null
@@ -297,31 +326,88 @@ export default function TutorDetailsPage() {
                       </Select>
                     </div>
 
-                    <div>
-                      <label className="text-sm font-medium mb-2 block text-dark-blue-gray">Available Time Slots</label>
-                      <Select
-                        onValueChange={setSelectedAvailability}
-                        value={selectedAvailability}
-                        disabled={!selectedSubject}
+                    {selectedSubject && (
+                      <Tabs
+                        value={availabilityType}
+                        onValueChange={(value: "recurring" | "specific_date") => {
+                          setAvailabilityType(value)
+                          setSelectedAvailability("")
+                        }}
                       >
-                        <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
-                          <SelectValue placeholder={selectedSubject ? "Choose time slot" : "Select subject first"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getAvailableSlots().map((slot) => (
-                            <SelectItem key={slot.id} value={slot.id}>
-                              {DAYS_OF_WEEK[slot.day_of_week]} - {formatTime(slot.start_time)} to{" "}
-                              {formatTime(slot.end_time)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {selectedSubject && getAvailableSlots().length === 0 && (
-                        <p className="text-sm text-blue-gray mt-2">
-                          No available time slots for this subject. Please contact the tutor directly.
-                        </p>
-                      )}
-                    </div>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="recurring" className="text-xs">
+                            <Repeat className="h-3 w-3 mr-1" />
+                            Weekly
+                          </TabsTrigger>
+                          <TabsTrigger value="specific_date" className="text-xs">
+                            <CalendarDays className="h-3 w-3 mr-1" />
+                            Specific
+                          </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="recurring" className="mt-4">
+                          <div>
+                            <label className="text-sm font-medium mb-2 block text-dark-blue-gray">
+                              Recurring Weekly Times
+                            </label>
+                            <Select onValueChange={setSelectedAvailability} value={selectedAvailability}>
+                              <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
+                                <SelectValue placeholder="Choose weekly time slot" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getRecurringSlots().map((slot) => (
+                                  <SelectItem key={slot.id} value={slot.id}>
+                                    <div className="flex items-center gap-2">
+                                      <Repeat className="h-3 w-3" />
+                                      {DAYS_OF_WEEK[slot.day_of_week!]} - {formatTime(slot.start_time)} to{" "}
+                                      {formatTime(slot.end_time)}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {getRecurringSlots().length === 0 && (
+                              <p className="text-sm text-blue-gray mt-2">
+                                No recurring weekly times available for this subject.
+                              </p>
+                            )}
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="specific_date" className="mt-4">
+                          <div>
+                            <label className="text-sm font-medium mb-2 block text-dark-blue-gray">
+                              Specific Date Times
+                            </label>
+                            <Select onValueChange={setSelectedAvailability} value={selectedAvailability}>
+                              <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
+                                <SelectValue placeholder="Choose specific date" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {getSpecificDateSlots().map((slot) => (
+                                  <SelectItem key={slot.id} value={slot.id}>
+                                    <div className="flex items-center gap-2">
+                                      <CalendarDays className="h-3 w-3" />
+                                      <div className="text-left">
+                                        <div>{formatDate(slot.specific_date!)}</div>
+                                        <div className="text-xs text-gray-500">
+                                          {formatTime(slot.start_time)} - {formatTime(slot.end_time)}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {getSpecificDateSlots().length === 0 && (
+                              <p className="text-sm text-blue-gray mt-2">
+                                No specific dates available for this subject.
+                              </p>
+                            )}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    )}
 
                     <Button
                       onClick={handleBookSession}
@@ -330,6 +416,14 @@ export default function TutorDetailsPage() {
                     >
                       Book Session
                     </Button>
+
+                    {selectedSubject && getRecurringSlots().length === 0 && getSpecificDateSlots().length === 0 && (
+                      <div className="text-center p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-blue-gray">
+                          No availability set for this subject. Please contact the tutor directly.
+                        </p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>

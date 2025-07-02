@@ -10,8 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Plus, Edit, Trash2, Clock, Calendar } from "lucide-react"
+import { ArrowLeft, Plus, Edit, Trash2, Clock, CalendarDays, Repeat } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -19,7 +21,9 @@ interface Availability {
   id: string
   tutor_id: string
   subject: string
-  day_of_week: number
+  availability_type: "recurring" | "specific_date"
+  day_of_week?: number
+  specific_date?: string
   start_time: string
   end_time: string
   is_active: boolean
@@ -75,9 +79,12 @@ export default function TutorAvailability() {
   const [loading, setLoading] = useState(true)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingAvailability, setEditingAvailability] = useState<Availability | null>(null)
+  const [activeTab, setActiveTab] = useState("recurring")
   const [formData, setFormData] = useState({
     subject: "",
+    availability_type: "recurring" as "recurring" | "specific_date",
     day_of_week: "",
+    specific_date: "",
     start_time: "",
     end_time: "",
   })
@@ -99,7 +106,9 @@ export default function TutorAvailability() {
         .select("*")
         .eq("tutor_id", user!.id)
         .eq("is_active", true)
+        .order("availability_type")
         .order("day_of_week")
+        .order("specific_date")
         .order("start_time")
 
       if (error) {
@@ -123,10 +132,28 @@ export default function TutorAvailability() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.subject || !formData.day_of_week || !formData.start_time || !formData.end_time) {
+    if (!formData.subject || !formData.start_time || !formData.end_time) {
       toast({
         title: "Missing Information",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (formData.availability_type === "recurring" && !formData.day_of_week) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a day of the week for recurring availability",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (formData.availability_type === "specific_date" && !formData.specific_date) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a specific date",
         variant: "destructive",
       })
       return
@@ -141,11 +168,29 @@ export default function TutorAvailability() {
       return
     }
 
+    // Check if specific date is in the past
+    if (formData.availability_type === "specific_date") {
+      const selectedDate = new Date(formData.specific_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (selectedDate < today) {
+        toast({
+          title: "Invalid Date",
+          description: "Cannot set availability for past dates",
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
     try {
       const availabilityData = {
         tutor_id: user!.id,
         subject: formData.subject,
-        day_of_week: Number.parseInt(formData.day_of_week),
+        availability_type: formData.availability_type,
+        day_of_week: formData.availability_type === "recurring" ? Number.parseInt(formData.day_of_week) : null,
+        specific_date: formData.availability_type === "specific_date" ? formData.specific_date : null,
         start_time: formData.start_time,
         end_time: formData.end_time,
         is_active: true,
@@ -180,7 +225,14 @@ export default function TutorAvailability() {
 
       setShowAddDialog(false)
       setEditingAvailability(null)
-      setFormData({ subject: "", day_of_week: "", start_time: "", end_time: "" })
+      setFormData({
+        subject: "",
+        availability_type: "recurring",
+        day_of_week: "",
+        specific_date: "",
+        start_time: "",
+        end_time: "",
+      })
       fetchAvailability()
     } catch (error) {
       console.error("Error saving availability:", error)
@@ -196,7 +248,9 @@ export default function TutorAvailability() {
     setEditingAvailability(item)
     setFormData({
       subject: item.subject,
-      day_of_week: item.day_of_week.toString(),
+      availability_type: item.availability_type,
+      day_of_week: item.day_of_week?.toString() || "",
+      specific_date: item.specific_date || "",
       start_time: item.start_time,
       end_time: item.end_time,
     })
@@ -244,7 +298,19 @@ export default function TutorAvailability() {
     })
   }
 
-  const groupedAvailability = availability.reduce(
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  const recurringAvailability = availability.filter((item) => item.availability_type === "recurring")
+  const specificDateAvailability = availability.filter((item) => item.availability_type === "specific_date")
+
+  const groupedRecurring = recurringAvailability.reduce(
     (acc, item) => {
       if (!acc[item.subject]) {
         acc[item.subject] = []
@@ -254,6 +320,21 @@ export default function TutorAvailability() {
     },
     {} as Record<string, Availability[]>,
   )
+
+  const groupedSpecific = specificDateAvailability.reduce(
+    (acc, item) => {
+      if (!acc[item.subject]) {
+        acc[item.subject] = []
+      }
+      acc[item.subject].push(item)
+      return acc
+    },
+    {} as Record<string, Availability[]>,
+  )
+
+  // Get minimum date (today)
+  const today = new Date()
+  const minDate = today.toISOString().split("T")[0]
 
   if (!user) return null
 
@@ -275,7 +356,7 @@ export default function TutorAvailability() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-dark-blue-gray">Availability Management</h1>
-                <p className="text-sm text-blue-gray">Set your available times for each subject</p>
+                <p className="text-sm text-blue-gray">Set your available times and specific dates</p>
               </div>
             </div>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -284,7 +365,14 @@ export default function TutorAvailability() {
                   className="bg-orange hover:bg-orange text-white"
                   onClick={() => {
                     setEditingAvailability(null)
-                    setFormData({ subject: "", day_of_week: "", start_time: "", end_time: "" })
+                    setFormData({
+                      subject: "",
+                      availability_type: "recurring",
+                      day_of_week: "",
+                      specific_date: "",
+                      start_time: "",
+                      end_time: "",
+                    })
                   }}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -316,23 +404,71 @@ export default function TutorAvailability() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-dark-blue-gray">Day of Week</label>
+                    <label className="text-sm font-medium text-dark-blue-gray">Availability Type</label>
                     <Select
-                      value={formData.day_of_week}
-                      onValueChange={(value) => setFormData({ ...formData, day_of_week: value })}
+                      value={formData.availability_type}
+                      onValueChange={(value: "recurring" | "specific_date") =>
+                        setFormData({
+                          ...formData,
+                          availability_type: value,
+                          day_of_week: "",
+                          specific_date: "",
+                        })
+                      }
                     >
                       <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
-                        <SelectValue placeholder="Select day" />
+                        <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {DAYS_OF_WEEK.map((day) => (
-                          <SelectItem key={day.value} value={day.value.toString()}>
-                            {day.label}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="recurring">
+                          <div className="flex items-center gap-2">
+                            <Repeat className="h-4 w-4" />
+                            Recurring Weekly
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="specific_date">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4" />
+                            Specific Date
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {formData.availability_type === "recurring" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-dark-blue-gray">Day of Week</label>
+                      <Select
+                        value={formData.day_of_week}
+                        onValueChange={(value) => setFormData({ ...formData, day_of_week: value })}
+                      >
+                        <SelectTrigger className="border-gray-300 focus:border-orange focus:ring-orange">
+                          <SelectValue placeholder="Select day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAYS_OF_WEEK.map((day) => (
+                            <SelectItem key={day.value} value={day.value.toString()}>
+                              {day.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  {formData.availability_type === "specific_date" && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-dark-blue-gray">Specific Date</label>
+                      <Input
+                        type="date"
+                        min={minDate}
+                        value={formData.specific_date}
+                        onChange={(e) => setFormData({ ...formData, specific_date: e.target.value })}
+                        className="border-gray-300 focus:border-orange focus:ring-orange"
+                      />
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -400,72 +536,173 @@ export default function TutorAvailability() {
             <p className="text-blue-gray">Loading availability...</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {Object.keys(groupedAvailability).length === 0 ? (
-              <Card className="border-gray-200 shadow-sm">
-                <CardContent className="text-center py-12">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-dark-blue-gray mb-2">No availability set</h3>
-                  <p className="text-blue-gray mb-4">
-                    Add your available times so students can book sessions with you.
-                  </p>
-                  <Button className="bg-orange hover:bg-orange text-white" onClick={() => setShowAddDialog(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Your First Availability
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              Object.entries(groupedAvailability).map(([subject, items]) => (
-                <Card key={subject} className="border-gray-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="text-xl text-dark-blue-gray flex items-center gap-2">
-                      <Clock className="h-5 w-5 text-orange" />
-                      {subject}
-                    </CardTitle>
-                    <CardDescription className="text-blue-gray">Your available times for {subject}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="border border-gray-200 rounded-lg p-4 hover:border-orange transition-colors"
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <Badge variant="outline" className="text-blue-gray border-gray-300">
-                              {getDayName(item.day_of_week)}
-                            </Badge>
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-blue-gray hover:text-orange hover:bg-orange/10"
-                                onClick={() => handleEdit(item)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                onClick={() => handleDelete(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="text-sm text-dark-blue-gray font-medium">
-                            {formatTime(item.start_time)} - {formatTime(item.end_time)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="bg-white border border-gray-200">
+              <TabsTrigger
+                value="recurring"
+                className="data-[state=active]:bg-orange data-[state=active]:text-white flex items-center gap-2"
+              >
+                <Repeat className="h-4 w-4" />
+                Recurring Weekly
+              </TabsTrigger>
+              <TabsTrigger
+                value="specific"
+                className="data-[state=active]:bg-orange data-[state=active]:text-white flex items-center gap-2"
+              >
+                <CalendarDays className="h-4 w-4" />
+                Specific Dates
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="recurring">
+              {Object.keys(groupedRecurring).length === 0 ? (
+                <Card className="border-gray-200 shadow-sm">
+                  <CardContent className="text-center py-12">
+                    <Repeat className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-dark-blue-gray mb-2">No recurring availability set</h3>
+                    <p className="text-blue-gray mb-4">
+                      Set your weekly recurring schedule so students can book regular sessions.
+                    </p>
+                    <Button className="bg-orange hover:bg-orange text-white" onClick={() => setShowAddDialog(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Recurring Availability
+                    </Button>
                   </CardContent>
                 </Card>
-              ))
-            )}
-          </div>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(groupedRecurring).map(([subject, items]) => (
+                    <Card key={subject} className="border-gray-200 shadow-sm">
+                      <CardHeader>
+                        <CardTitle className="text-xl text-dark-blue-gray flex items-center gap-2">
+                          <Clock className="h-5 w-5 text-orange" />
+                          {subject}
+                        </CardTitle>
+                        <CardDescription className="text-blue-gray">
+                          Your recurring weekly availability for {subject}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="border border-gray-200 rounded-lg p-4 hover:border-orange transition-colors"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <Badge variant="outline" className="text-blue-gray border-gray-300">
+                                  <Repeat className="h-3 w-3 mr-1" />
+                                  {getDayName(item.day_of_week!)}
+                                </Badge>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-blue-gray hover:text-orange hover:bg-orange/10"
+                                    onClick={() => handleEdit(item)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => handleDelete(item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="text-sm text-dark-blue-gray font-medium">
+                                {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="specific">
+              {Object.keys(groupedSpecific).length === 0 ? (
+                <Card className="border-gray-200 shadow-sm">
+                  <CardContent className="text-center py-12">
+                    <CalendarDays className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-dark-blue-gray mb-2">No specific dates set</h3>
+                    <p className="text-blue-gray mb-4">
+                      Set availability for specific dates like holidays, special sessions, or one-time availability.
+                    </p>
+                    <Button className="bg-orange hover:bg-orange text-white" onClick={() => setShowAddDialog(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Specific Date
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {Object.entries(groupedSpecific).map(([subject, items]) => (
+                    <Card key={subject} className="border-gray-200 shadow-sm">
+                      <CardHeader>
+                        <CardTitle className="text-xl text-dark-blue-gray flex items-center gap-2">
+                          <CalendarDays className="h-5 w-5 text-orange" />
+                          {subject}
+                        </CardTitle>
+                        <CardDescription className="text-blue-gray">
+                          Your specific date availability for {subject}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-4">
+                          {items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="border border-gray-200 rounded-lg p-4 hover:border-orange transition-colors"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <Badge variant="outline" className="text-blue-gray border-gray-300">
+                                  <CalendarDays className="h-3 w-3 mr-1" />
+                                  Specific Date
+                                </Badge>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-blue-gray hover:text-orange hover:bg-orange/10"
+                                    onClick={() => handleEdit(item)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                    onClick={() => handleDelete(item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-sm text-dark-blue-gray font-medium">
+                                  {formatDate(item.specific_date!)}
+                                </div>
+                                <div className="text-sm text-blue-gray">
+                                  {formatTime(item.start_time)} - {formatTime(item.end_time)}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </main>
     </div>
