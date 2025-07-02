@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { GraduationCap, Upload, FileText, X, User, Mail, Lock, ArrowLeft, Sparkles, CheckCircle } from "lucide-react"
+import { GraduationCap, Upload, FileText, X, User, Mail, Lock, ArrowLeft, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
@@ -187,31 +187,28 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-mesh flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-0 shadow-2xl bg-white/90 backdrop-blur-lg">
-          <CardHeader className="text-center pb-8">
-            <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                <CheckCircle className="h-10 w-10 text-white" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-gray-200 shadow-lg">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-8 w-8 text-white" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-gray-900 mb-2">Welcome to Tutortots!</CardTitle>
-            <CardDescription className="text-lg text-gray-600">
-              Your account has been created successfully
+            <CardTitle className="text-2xl text-dark-blue-gray">Registration Successful!</CardTitle>
+            <CardDescription className="text-blue-gray">
+              Your account has been created and is under review
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center space-y-6">
-            <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-              <h3 className="font-semibold text-green-800 mb-2">What's Next?</h3>
-              <p className="text-green-700 text-sm leading-relaxed">
+          <CardContent className="text-center space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-green-800 text-sm">
                 Your account is under review by our admin team. You'll receive access once verified. This usually takes
                 24-48 hours.
               </p>
             </div>
             <Link href="/login">
-              <Button className="w-full h-12 bg-gradient-orange text-white hover:shadow-lg hover:scale-105 transition-all duration-300 btn-glow text-lg font-semibold rounded-xl">
-                Go to Login
-              </Button>
+              <Button className="w-full bg-orange hover:bg-orange text-white">Go to Login</Button>
             </Link>
           </CardContent>
         </Card>
@@ -220,63 +217,49 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-mesh flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute top-20 left-10 w-32 h-32 bg-orange-200 rounded-full opacity-20 animate-float"></div>
-      <div
-        className="absolute bottom-20 right-20 w-24 h-24 bg-blue-200 rounded-full opacity-20 animate-float"
-        style={{ animationDelay: "1s" }}
-      ></div>
-
-      <div className="w-full max-w-lg relative">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
         {/* Back Button */}
-        <Link href="/" className="inline-flex items-center text-gray-600 hover:text-orange-500 mb-6 transition-colors">
+        <Link href="/" className="inline-flex items-center text-blue-gray hover:text-orange mb-6 transition-colors">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Home
         </Link>
 
-        <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur-lg">
-          <CardHeader className="text-center pb-6">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-orange rounded-2xl flex items-center justify-center">
-                  <GraduationCap className="h-8 w-8 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-400 rounded-full flex items-center justify-center">
-                  <Sparkles className="h-3 w-3 text-white" />
-                </div>
+        <Card className="border-gray-200 shadow-lg">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-12 h-12 bg-orange rounded-lg flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-white" />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-gray-900 mb-2">Join Tutortots</CardTitle>
-            <CardDescription className="text-lg text-gray-600">
-              Create your account and start your learning journey
-            </CardDescription>
+            <CardTitle className="text-2xl text-dark-blue-gray">Join Tutortots</CardTitle>
+            <CardDescription className="text-blue-gray">Create your account to get started</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
+                <Label htmlFor="name" className="text-dark-blue-gray font-medium">
                   Full Name
                 </Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="name"
                     placeholder="Enter your full name"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
-                    className="pl-12 h-12 border-2 border-gray-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl transition-all duration-300"
+                    className="pl-10 border-gray-300 focus:border-orange focus:ring-orange"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                <Label htmlFor="email" className="text-dark-blue-gray font-medium">
                   Institutional Email
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="email"
                     type="email"
@@ -284,39 +267,39 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
-                    className="pl-12 h-12 border-2 border-gray-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl transition-all duration-300"
+                    className="pl-10 border-gray-300 focus:border-orange focus:ring-orange"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                <Label htmlFor="password" className="text-dark-blue-gray font-medium">
                   Password
                 </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Create a strong password"
+                    placeholder="Create a password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
-                    className="pl-12 h-12 border-2 border-gray-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl transition-all duration-300"
+                    className="pl-10 border-gray-300 focus:border-orange focus:ring-orange"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-semibold text-gray-700">I am a...</Label>
+                <Label className="text-dark-blue-gray font-medium">I am a...</Label>
                 <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                  <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-orange-400 rounded-xl">
+                  <SelectTrigger className="border-gray-300 focus:border-orange">
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
                           Student
                         </Badge>
                         <span>Looking for tutoring help</span>
@@ -324,7 +307,7 @@ export default function RegisterPage() {
                     </SelectItem>
                     <SelectItem value="tutor">
                       <div className="flex items-center space-x-2">
-                        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                        <Badge variant="outline" className="bg-orange text-white border-orange">
                           Tutor
                         </Badge>
                         <span>Want to teach others</span>
@@ -336,9 +319,9 @@ export default function RegisterPage() {
 
               {formData.role === "student" && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Academic Year</Label>
+                  <Label className="text-dark-blue-gray font-medium">Academic Year</Label>
                   <Select onValueChange={(value) => setFormData({ ...formData, academicYear: value })}>
-                    <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-orange-400 rounded-xl">
+                    <SelectTrigger className="border-gray-300 focus:border-orange">
                       <SelectValue placeholder="Select your academic year" />
                     </SelectTrigger>
                     <SelectContent>
@@ -354,7 +337,7 @@ export default function RegisterPage() {
               {formData.role === "tutor" && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="subjects" className="text-sm font-semibold text-gray-700">
+                    <Label htmlFor="subjects" className="text-dark-blue-gray font-medium">
                       Subjects You Teach
                     </Label>
                     <Input
@@ -363,39 +346,38 @@ export default function RegisterPage() {
                       value={formData.subjects}
                       onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
                       required
-                      className="h-12 border-2 border-gray-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl transition-all duration-300"
+                      className="border-gray-300 focus:border-orange focus:ring-orange"
                     />
                     <p className="text-xs text-gray-500">Separate multiple subjects with commas</p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="bio" className="text-sm font-semibold text-gray-700">
+                    <Label htmlFor="bio" className="text-dark-blue-gray font-medium">
                       About You
                     </Label>
                     <Textarea
                       id="bio"
-                      placeholder="Tell students about your teaching experience and approach..."
+                      placeholder="Tell students about your teaching experience..."
                       value={formData.bio}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      className="border-2 border-gray-200 focus:border-orange-400 focus:ring-orange-200 rounded-xl transition-all duration-300 min-h-[100px]"
+                      className="border-gray-300 focus:border-orange focus:ring-orange"
                     />
                   </div>
 
                   {/* Qualification Document Upload */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold text-gray-700">Qualification Document *</Label>
-                    <p className="text-xs text-gray-600">
-                      Upload your transcript, certificate, or other proof of qualification (PDF, JPEG, PNG - Max 5MB)
+                  <div className="space-y-2">
+                    <Label className="text-dark-blue-gray font-medium">Qualification Document *</Label>
+                    <p className="text-xs text-gray-500">
+                      Upload your transcript, certificate, or other proof (PDF, JPEG, PNG - Max 5MB)
                     </p>
 
                     {!selectedFile ? (
-                      <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-orange-300 transition-colors bg-gray-50/50">
-                        <Upload className="h-10 w-10 mx-auto text-gray-400 mb-3" />
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange transition-colors">
+                        <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                         <Label htmlFor="file-upload" className="cursor-pointer">
-                          <span className="text-orange-500 hover:text-orange-600 font-semibold">Click to upload</span>
+                          <span className="text-orange hover:underline">Click to upload</span>
                           <span className="text-gray-600"> or drag and drop</span>
                         </Label>
-                        <p className="text-xs text-gray-500 mt-2">PDF, JPEG, PNG up to 5MB</p>
                         <Input
                           id="file-upload"
                           type="file"
@@ -405,14 +387,14 @@ export default function RegisterPage() {
                         />
                       </div>
                     ) : (
-                      <div className="border-2 border-orange-200 rounded-xl p-4 bg-orange-50">
+                      <div className="border border-orange rounded-lg p-3 bg-orange bg-opacity-5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                              <FileText className="h-5 w-5 text-orange-600" />
+                            <div className="w-8 h-8 bg-orange rounded flex items-center justify-center">
+                              <FileText className="h-4 w-4 text-white" />
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
+                              <p className="text-sm font-medium text-dark-blue-gray">{selectedFile.name}</p>
                               <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                             </div>
                           </div>
@@ -421,7 +403,7 @@ export default function RegisterPage() {
                             variant="ghost"
                             size="sm"
                             onClick={removeFile}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -432,54 +414,40 @@ export default function RegisterPage() {
                 </>
               )}
 
-              <div className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+              <div className="flex items-start space-x-2 p-3 bg-gray-50 rounded-lg">
                 <Checkbox
                   id="terms"
                   checked={formData.acceptTerms}
                   onCheckedChange={(checked) => setFormData({ ...formData, acceptTerms: checked as boolean })}
                   className="mt-1"
                 />
-                <Label htmlFor="terms" className="text-sm text-gray-700 leading-relaxed">
+                <Label htmlFor="terms" className="text-sm text-blue-gray">
                   I agree to the{" "}
-                  <a href="#" className="text-orange-500 hover:text-orange-600 hover:underline">
+                  <a href="#" className="text-orange hover:underline">
                     Terms of Service
                   </a>{" "}
                   and{" "}
-                  <a href="#" className="text-orange-500 hover:text-orange-600 hover:underline">
+                  <a href="#" className="text-orange hover:underline">
                     Privacy Policy
                   </a>
                 </Label>
               </div>
 
               {error && (
-                <Alert variant="destructive" className="border-red-200 bg-red-50">
-                  <AlertDescription className="text-red-700">{error}</AlertDescription>
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
 
-              <Button
-                type="submit"
-                className="w-full h-12 bg-gradient-orange text-white hover:shadow-lg hover:scale-105 transition-all duration-300 btn-glow text-lg font-semibold rounded-xl"
-                disabled={loading}
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Creating Account...
-                  </div>
-                ) : (
-                  "Create Account"
-                )}
+              <Button type="submit" className="w-full bg-orange hover:bg-orange text-white" disabled={loading}>
+                {loading ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
 
-            <div className="text-center pt-6 border-t border-gray-200">
-              <p className="text-gray-600">
+            <div className="text-center pt-4 border-t border-gray-200">
+              <p className="text-blue-gray">
                 Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-orange-500 hover:text-orange-600 font-semibold hover:underline transition-colors"
-                >
+                <Link href="/login" className="text-orange hover:underline font-medium">
                   Sign in here
                 </Link>
               </p>
