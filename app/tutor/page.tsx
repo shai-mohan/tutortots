@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Calendar, User, LogOut, Plus, ExternalLink, CheckCircle } from "lucide-react"
+import { Calendar, User, LogOut, Plus, ExternalLink, CheckCircle, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -200,19 +200,38 @@ export default function TutorDashboard() {
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100">
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Tutor Dashboard</h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+            <Link href="/tutor/feedback">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Feedback
+              </Button>
+            </Link>
             <Link href="/tutor/profile">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+              >
                 <User className="h-4 w-4 mr-2" />
                 Profile
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={logout}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={logout}
+              className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -228,25 +247,25 @@ export default function TutorDashboard() {
         ) : (
           <>
             <div className="grid lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+              <Card className="border-orange-100">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-blue-600">{upcomingSessions.length}</div>
+                  <div className="text-2xl font-bold text-orange-600">{upcomingSessions.length}</div>
                   <p className="text-sm text-gray-600">Upcoming Sessions</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-orange-100">
                 <CardContent className="p-6">
                   <div className="text-2xl font-bold text-green-600">{completedSessions.length}</div>
                   <p className="text-sm text-gray-600">Completed Sessions</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-orange-100">
                 <CardContent className="p-6">
                   <div className="text-2xl font-bold text-yellow-600">{user.rating?.toFixed(1) || "0.0"}</div>
                   <p className="text-sm text-gray-600">Average Rating</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-orange-100">
                 <CardContent className="p-6">
                   <div className="text-2xl font-bold text-purple-600">{user.totalRatings || 0}</div>
                   <p className="text-sm text-gray-600">Total Reviews</p>
@@ -256,12 +275,12 @@ export default function TutorDashboard() {
 
             <div className="space-y-8">
               <div>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-gray-800">
+                  <Calendar className="h-5 w-5 text-orange-500" />
                   Upcoming Sessions
                 </h2>
                 {upcomingSessions.length === 0 ? (
-                  <Card>
+                  <Card className="border-orange-100">
                     <CardContent className="text-center py-8">
                       <p className="text-gray-500">No upcoming sessions scheduled.</p>
                     </CardContent>
@@ -269,22 +288,22 @@ export default function TutorDashboard() {
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {upcomingSessions.map((session) => (
-                      <Card key={session.id}>
+                      <Card key={session.id} className="border-orange-100 hover:border-orange-200 transition-colors">
                         <CardHeader>
-                          <CardTitle className="text-lg">{session.subject}</CardTitle>
+                          <CardTitle className="text-lg text-gray-800">{session.subject}</CardTitle>
                           <CardDescription>with {getStudentName(session.student_id)}</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
                             <div className="space-y-1">
-                              <p className="text-sm">
+                              <p className="text-sm text-gray-600">
                                 <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
                               </p>
-                              <p className="text-sm">
+                              <p className="text-sm text-gray-600">
                                 <strong>Time:</strong> {session.time}
                               </p>
                             </div>
-                            <Badge variant="outline" className="text-green-600">
+                            <Badge variant="outline" className="text-green-600 border-green-200">
                               Scheduled
                             </Badge>
 
@@ -295,7 +314,7 @@ export default function TutorDashboard() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="flex-1"
+                                      className="flex-1 border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
                                       onClick={() => setSelectedSession(session)}
                                     >
                                       <Plus className="h-4 w-4 mr-1" />
@@ -314,15 +333,24 @@ export default function TutorDashboard() {
                                         placeholder="https://zoom.us/j/..."
                                         value={zoomLink}
                                         onChange={(e) => setZoomLink(e.target.value)}
+                                        className="focus:ring-orange-500 focus:border-orange-500"
                                       />
-                                      <Button onClick={addZoomLink} className="w-full">
+                                      <Button
+                                        onClick={addZoomLink}
+                                        className="w-full bg-orange-500 hover:bg-orange-600"
+                                      >
                                         Add Link
                                       </Button>
                                     </div>
                                   </DialogContent>
                                 </Dialog>
                               ) : (
-                                <Button size="sm" variant="outline" className="flex-1" asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1 border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+                                  asChild
+                                >
                                   <a href={session.zoom_link} target="_blank" rel="noopener noreferrer">
                                     <ExternalLink className="h-4 w-4 mr-1" />
                                     Join
@@ -330,7 +358,11 @@ export default function TutorDashboard() {
                                 </Button>
                               )}
 
-                              <Button size="sm" onClick={() => markCompleted(session.id)} className="flex-1">
+                              <Button
+                                size="sm"
+                                onClick={() => markCompleted(session.id)}
+                                className="flex-1 bg-orange-500 hover:bg-orange-600"
+                              >
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 Complete
                               </Button>
@@ -344,9 +376,9 @@ export default function TutorDashboard() {
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold mb-4">Recent Completed Sessions</h2>
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Completed Sessions</h2>
                 {completedSessions.length === 0 ? (
-                  <Card>
+                  <Card className="border-orange-100">
                     <CardContent className="text-center py-8">
                       <p className="text-gray-500">No completed sessions yet.</p>
                     </CardContent>
@@ -354,20 +386,20 @@ export default function TutorDashboard() {
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {completedSessions.slice(0, 6).map((session) => (
-                      <Card key={session.id}>
+                      <Card key={session.id} className="border-orange-100 hover:border-orange-200 transition-colors">
                         <CardHeader>
-                          <CardTitle className="text-lg">{session.subject}</CardTitle>
+                          <CardTitle className="text-lg text-gray-800">{session.subject}</CardTitle>
                           <CardDescription>with {getStudentName(session.student_id)}</CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
-                            <p className="text-sm">
+                            <p className="text-sm text-gray-600">
                               <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
                             </p>
-                            <p className="text-sm">
+                            <p className="text-sm text-gray-600">
                               <strong>Time:</strong> {session.time}
                             </p>
-                            <Badge variant="outline" className="text-blue-600">
+                            <Badge variant="outline" className="text-blue-600 border-blue-200">
                               Completed
                             </Badge>
                           </div>
