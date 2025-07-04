@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectTrigger } from "@/components/ui/select"
-import { Search, User, LogOut, Star, Calendar, Coins, Gift } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Search, User, LogOut, Star, Calendar, MessageSquare, Loader2, Coins, Gift } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -246,4 +247,61 @@ export default function StudentDashboard() {
                   />
                 </div>
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                  <SelectTrigger className="w-full sm:w-48 border-gray-300 focus:border-orange focus:ring-orange">\
+                  <SelectTrigger className="w-full sm:w-48 border-gray-300 focus:border-orange focus:ring-orange">
+                    <SelectValue placeholder="Select a subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getAllSubjects().map((subject) => (
+                      <SelectItem key={subject} value={subject}>
+                        {subject}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        {loading ? (
+          <div className="flex justify-center items-center">
+            <Loader2 className="h-10 w-10 animate-spin text-blue-gray" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredTutors.map((tutor) => (
+              <Card key={tutor.id} className="border-gray-200 shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg text-dark-blue-gray">{tutor.name}</CardTitle>
+                  <CardDescription className="text-blue-gray">{tutor.subjects.join(", ")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <Avatar>
+                      <AvatarImage src={tutor.profilePhotoUrl || ""} alt={tutor.name} />
+                      <AvatarFallback>{tutor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm text-blue-gray">{tutor.bio}</p>
+                      <div className="flex items-center gap-1">
+                        {renderStars(tutor.rating)}
+                        <span className="text-sm text-blue-gray">
+                          {tutor.rating.toFixed(1)} ({tutor.totalRatings} ratings)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Button variant="default" className="bg-blue-gray text-white">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Book Session
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
