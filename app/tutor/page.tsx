@@ -16,7 +16,18 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Calendar, User, LogOut, Plus, ExternalLink, CheckCircle, MessageSquare, Clock } from "lucide-react"
+import {
+  Calendar,
+  User,
+  LogOut,
+  Plus,
+  ExternalLink,
+  CheckCircle,
+  MessageSquare,
+  Clock,
+  Gift,
+  Coins,
+} from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -253,6 +264,17 @@ export default function TutorDashboard() {
             <div className="hidden md:flex items-center gap-2 text-sm text-blue-gray">
               <span>Welcome, {user.name}</span>
             </div>
+            <Link href="/tutor/rewards">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+              >
+                <Gift className="h-4 w-4 mr-2" />
+                <Coins className="h-4 w-4 mr-1" />
+                {user.points || 0}
+              </Button>
+            </Link>
             <Link href="/tutor/availability">
               <Button
                 variant="outline"

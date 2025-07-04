@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, User, LogOut, Star, Calendar, MessageSquare, Loader2, Coins, Gift } from "lucide-react"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Search, User, LogOut, Star, Calendar, Coins, Gift, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 
 interface Tutor {
   id: string
@@ -28,7 +29,7 @@ export default function StudentDashboard() {
   const [tutors, setTutors] = useState<Tutor[]>([])
   const [filteredTutors, setFilteredTutors] = useState<Tutor[]>([])
   const [searchTerm, setSearchTerm] = useState("")
-  const [selectedSubject, setSelectedSubject] = useState("")
+  const [selectedSubject, setSelectedSubject] = useState("all") // Updated default value
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -121,7 +122,8 @@ export default function StudentDashboard() {
       )
     }
 
-    if (selectedSubject) {
+    if (selectedSubject !== "all") {
+      // Updated condition
       filtered = filtered.filter((tutor) => tutor.subjects.includes(selectedSubject))
     }
 
@@ -248,9 +250,10 @@ export default function StudentDashboard() {
                 </div>
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                   <SelectTrigger className="w-full sm:w-48 border-gray-300 focus:border-orange focus:ring-orange">
-                    <SelectValue placeholder="Select a subject" />
+                    <SelectValue placeholder="Filter by subject" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="all">All Subjects</SelectItem> {/* Updated value */}
                     {getAllSubjects().map((subject) => (
                       <SelectItem key={subject} value={subject}>
                         {subject}
@@ -262,45 +265,81 @@ export default function StudentDashboard() {
             </CardContent>
           </Card>
         </div>
-        {loading ? (
-          <div className="flex justify-center items-center">
-            <Loader2 className="h-10 w-10 animate-spin text-blue-gray" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTutors.map((tutor) => (
-              <Card key={tutor.id} className="border-gray-200 shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg text-dark-blue-gray">{tutor.name}</CardTitle>
-                  <CardDescription className="text-blue-gray">{tutor.subjects.join(", ")}</CardDescription>
-                </CardHeader>
-                <CardContent>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTutors.map((tutor) => (
+            <Card key={tutor.id} className="card-clean hover-lift overflow-hidden">
+              {/* Profile Header with Banner */}
+              <div className="relative">
+                <div className="h-16 bg-gradient-to-r from-orange/20 to-orange/10"></div>
+                <div className="absolute -bottom-8 left-6">
+                  <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
+                    <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
+                    <AvatarFallback className="text-lg bg-orange text-white font-semibold">
+                      {tutor.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </div>
+
+              <CardHeader className="pt-12 pb-4">
+                <div className="space-y-2">
+                  <CardTitle className="text-xl text-dark-blue-gray">{tutor.name}</CardTitle>
                   <div className="flex items-center gap-2">
-                    <Avatar>
-                      <AvatarImage src={tutor.profilePhotoUrl || ""} alt={tutor.name} />
-                      <AvatarFallback>{tutor.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-sm text-blue-gray">{tutor.bio}</p>
-                      <div className="flex items-center gap-1">
-                        {renderStars(tutor.rating)}
-                        <span className="text-sm text-blue-gray">
-                          {tutor.rating.toFixed(1)} ({tutor.totalRatings} ratings)
-                        </span>
-                      </div>
-                    </div>
+                    <div className="flex items-center gap-1">{renderStars(tutor.rating)}</div>
+                    <span className="text-sm text-blue-gray">
+                      {tutor.rating.toFixed(1)} ({tutor.totalRatings} {tutor.totalRatings === 1 ? "review" : "reviews"})
+                    </span>
                   </div>
-                  <div className="mt-4">
-                    <Button variant="default" className="bg-blue-gray text-white">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Book Session
-                    </Button>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* Subjects Section */}
+                <div>
+                  <h4 className="text-sm font-medium text-dark-blue-gray mb-2 flex items-center gap-1">
+                    <MessageSquare className="h-4 w-4 text-orange" />
+                    Subjects
+                  </h4>
+                  <div className="flex flex-wrap gap-1">
+                    {tutor.subjects.slice(0, 3).map((subject) => (
+                      <Badge
+                        key={subject}
+                        variant="secondary"
+                        className="text-xs bg-orange/10 text-orange border-orange/20"
+                      >
+                        {subject}
+                      </Badge>
+                    ))}
+                    {tutor.subjects.length > 3 && (
+                      <Badge variant="secondary" className="text-xs bg-gray-100 text-blue-gray">
+                        +{tutor.subjects.length - 3} more
+                      </Badge>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </div>
+
+                {/* Bio Section */}
+                {tutor.bio && (
+                  <div>
+                    <h4 className="text-sm font-medium text-dark-blue-gray mb-2 flex items-center gap-1">
+                      <User className="h-4 w-4 text-orange" />
+                      About
+                    </h4>
+                    <p className="text-sm text-blue-gray line-clamp-2">{tutor.bio}</p>
+                  </div>
+                )}
+              </CardContent>
+
+              {/* Card Footer */}
+              <div className="p-6 pt-0">
+                <Link href={`/student/tutor/${tutor.id}`}>
+                  <Button className="w-full bg-orange hover:bg-orange text-white">View Profile & Book</Button>
+                </Link>
+              </div>
+            </Card>
+          ))}
+        </div>
       </main>
     </div>
   )

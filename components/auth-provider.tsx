@@ -19,6 +19,7 @@ interface User {
   academicYear?: string
   rating?: number
   totalRatings?: number
+  points?: number
 }
 
 interface AuthContextType {
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             rating: profile.rating,
             totalRatings: profile.total_ratings,
             profileImage: profile.profile_photo_url,
+            points: profile.points || 0,
           })
         }
       }
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             rating: profile.rating,
             totalRatings: profile.total_ratings,
             profileImage: profile.profile_photo_url,
+            points: profile.points || 0,
           })
         }
       } else if (event === "SIGNED_OUT") {
