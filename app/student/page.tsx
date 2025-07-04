@@ -347,7 +347,9 @@ export default function StudentDashboard() {
                   <GraduationCap className="h-5 w-5 text-orange" />
                   Available Tutors
                 </CardTitle>
-                <CardDescription className="text-blue-gray">Find and book sessions with qualified tutors</CardDescription>
+                <CardDescription className="text-blue-gray">
+                  Find and book sessions with qualified tutors
+                </CardDescription>
 
                 {/* Search and Filter */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -421,7 +423,11 @@ export default function StudentDashboard() {
                             </div>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {tutor.subjects.slice(0, 3).map((subject) => (
-                                <Badge key={subject} variant="outline" className="text-xs border-gray-300 text-blue-gray">
+                                <Badge
+                                  key={subject}
+                                  variant="outline"
+                                  className="text-xs border-gray-300 text-blue-gray"
+                                >
                                   {subject}
                                 </Badge>
                               ))}
@@ -465,7 +471,10 @@ export default function StudentDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {recentSessions.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                    <div
+                      key={session.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                    >
                       <div>
                         <h4 className="font-medium text-dark-blue-gray text-sm">{session.tutorName}</h4>
                         <p className="text-xs text-blue-gray">{session.subject}</p>
@@ -486,7 +495,10 @@ export default function StudentDashboard() {
                   ))}
                 </div>
                 <Link href="/student/calendar">
-                  <Button variant="outline" className="w-full mt-4 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent">
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                  >
                     View All Sessions
                   </Button>
                 </Link>
@@ -510,4 +522,17 @@ export default function StudentDashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-gray">Completion Rate</span>
                     <span className="text-sm font-medium text-green-600">
-                      {Math.round((quickStats.completedSessions / quickStats.totalSessions) *
+                      {quickStats.totalSessions > 0
+                        ? `${Math.round((quickStats.completedSessions / quickStats.totalSessions) * 100)}%`
+                        : "0%"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
