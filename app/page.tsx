@@ -332,14 +332,14 @@ export default function HomePage() {
               <h3 className="font-semibold mb-4">Platform</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
                 <li>
-                  <Link href="/register" className="hover:text-orange transition-colors">
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
                     Register
-                  </Link>
+                  </button>
                 </li>
                 <li>
-                  <Link href="/login" className="hover:text-orange transition-colors">
-                    Login
-                  </Link>
+                  <button onClick={() => setShowLoginModal(true)} className="hover:text-orange transition-colors">
+                    Sign In
+                  </button>
                 </li>
                 <li>
                   <Link href="#features" className="hover:text-orange transition-colors">
