@@ -1,401 +1,461 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { useAuth } from "@/components/auth-provider"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { GraduationCap, Users, Calendar, Star, BookOpen, Shield, Clock, ArrowRight } from "lucide-react"
-import Link from "next/link"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Award, Star, MapPin, CheckCircle, ArrowRight, GraduationCap, Target, Zap } from "lucide-react"
 import { LoginForm } from "@/components/login-form"
 import { RegisterForm } from "@/components/register-form"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export default function HomePage() {
-  const { user } = useAuth()
-  const router = useRouter()
-
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
 
-  useEffect(() => {
-    if (user) {
-      if (user.role === "admin") {
-        router.push("/admin")
-      } else if (user.role === "student") {
-        router.push("/student")
-      } else if (user.role === "tutor") {
-        router.push("/tutor")
-      }
-    }
-  }, [user, router])
-
-  if (user) {
-    return null // Will redirect
+  const switchToRegister = () => {
+    setShowLoginModal(false)
+    setShowRegisterModal(true)
   }
 
+  const switchToLogin = () => {
+    setShowRegisterModal(false)
+    setShowLoginModal(true)
+  }
+
+  const featuredTutors = [
+    {
+      id: "1",
+      name: "Dr. Sarah Chen",
+      subjects: ["Mathematics", "Physics"],
+      rating: 4.9,
+      sessions: 150,
+      hourlyRate: 80,
+      image: "/placeholder-user.jpg",
+      location: "Kuala Lumpur",
+      verified: true,
+    },
+    {
+      id: "2",
+      name: "Prof. Ahmad Rahman",
+      subjects: ["Chemistry", "Biology"],
+      rating: 4.8,
+      sessions: 120,
+      hourlyRate: 75,
+      image: "/placeholder-user.jpg",
+      location: "Petaling Jaya",
+      verified: true,
+    },
+    {
+      id: "3",
+      name: "Ms. Lisa Wong",
+      subjects: ["English", "Malay"],
+      rating: 4.9,
+      sessions: 200,
+      hourlyRate: 60,
+      image: "/placeholder-user.jpg",
+      location: "Subang Jaya",
+      verified: true,
+    },
+  ]
+
+  const testimonials = [
+    {
+      name: "Emily Tan",
+      role: "SPM Student",
+      content: "The tutors here are amazing! My grades improved significantly after just a few sessions.",
+      rating: 5,
+      image: "/placeholder-user.jpg",
+    },
+    {
+      name: "Marcus Lim",
+      role: "STPM Student",
+      content: "Flexible scheduling and quality teaching. Highly recommend for anyone preparing for exams.",
+      rating: 5,
+      image: "/placeholder-user.jpg",
+    },
+    {
+      name: "Priya Sharma",
+      role: "University Student",
+      content: "The rewards system keeps me motivated, and the tutors are very professional.",
+      rating: 5,
+      image: "/placeholder-user.jpg",
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo/Brand */}
-            <div className="flex items-center space-x-3">
-              <GraduationCap className="h-8 w-8 text-orange" />
-              <span className="text-xl font-bold text-dark-blue-gray">Tutortots</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange to-orange-600 rounded-lg flex items-center justify-center">
+              <GraduationCap className="h-6 w-6 text-white" />
             </div>
-
-            {/* Navigation Links */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="#features" className="text-blue-gray hover:text-orange transition-colors">
-                Features
-              </Link>
-              <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
-                About
-              </Link>
-              <Link href="#contact" className="text-blue-gray hover:text-orange transition-colors">
-                Contact
-              </Link>
+            <div>
+              <h1 className="text-xl font-bold text-dark-blue-gray">Sunway Tutoring</h1>
+              <p className="text-xs text-blue-gray">Excellence in Education</p>
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowLoginModal(true)}
+              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+            >
+              Login
+            </Button>
+            <Button onClick={() => setShowRegisterModal(true)} className="bg-orange hover:bg-orange-600 text-white">
+              Get Started
+            </Button>
+          </div>
+        </div>
+      </header>
 
-            {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
+      {/* Hero Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto text-center">
+          <div className="max-w-4xl mx-auto">
+            <Badge className="mb-6 bg-orange-100 text-orange-800 border-orange-200">🎓 Trusted by 1000+ Students</Badge>
+            <h1 className="text-5xl md:text-6xl font-bold text-dark-blue-gray mb-6 leading-tight">
+              Excel in Your Studies with
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange to-orange-600">
+                {" "}
+                Expert Tutors
+              </span>
+            </h1>
+            <p className="text-xl text-blue-gray mb-8 max-w-2xl mx-auto leading-relaxed">
+              Connect with qualified tutors, track your progress, and earn rewards while achieving academic excellence.
+              Your success story starts here.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
-                variant="ghost"
-                className="text-blue-gray hover:text-orange"
-                onClick={() => setShowLoginModal(true)}
+                size="lg"
+                onClick={() => setShowRegisterModal(true)}
+                className="bg-orange hover:bg-orange-600 text-white px-8 py-4 text-lg"
               >
-                Sign In
+                Start Learning Today
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <Button className="bg-orange hover:bg-orange text-white" onClick={() => setShowRegisterModal(true)}>
-                Get Started
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setShowLoginModal(true)}
+                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent px-8 py-4 text-lg"
+              >
+                Browse Tutors
               </Button>
             </div>
           </div>
         </div>
-      </nav>
+      </section>
 
-      {/* Hero Section */}
-      <section className="py-12 sm:py-16 lg:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-dark-blue-gray mb-6 leading-tight">
-              Connect with Expert Tutors at <span className="text-orange">Tutortots</span>
-            </h1>
-            <p className="text-lg sm:text-xl text-blue-gray mb-8 leading-relaxed max-w-3xl mx-auto">
-              Transform your learning journey with personalized tutoring from Sunway University's finest educators. Book
-              sessions, get expert help, and achieve academic excellence.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
-              <Button
-                size="lg"
-                className="px-6 sm:px-8 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
-                onClick={() => setShowRegisterModal(true)}
-              >
-                Start Learning Today
-                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
-
-              <Button
-                variant="outline"
-                size="lg"
-                className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-base sm:text-lg bg-transparent"
-                onClick={() => setShowLoginModal(true)}
-              >
-                Sign In
-              </Button>
+      {/* Stats Section */}
+      <section className="py-16 px-4 bg-white/50">
+        <div className="container mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-orange mb-2">500+</div>
+              <div className="text-blue-gray">Expert Tutors</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-orange mb-2">10K+</div>
+              <div className="text-blue-gray">Sessions Completed</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-orange mb-2">95%</div>
+              <div className="text-blue-gray">Success Rate</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold text-orange mb-2">4.9</div>
+              <div className="text-blue-gray">Average Rating</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Why Choose Tutortots</h2>
-            <p className="text-lg sm:text-xl text-blue-gray max-w-2xl mx-auto">
-              Everything you need for academic success in one platform
+      <section className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-dark-blue-gray mb-4">Why Choose Sunway Tutoring?</h2>
+            <p className="text-xl text-blue-gray max-w-2xl mx-auto">
+              We provide everything you need for academic success in one comprehensive platform.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-orange rounded-lg flex items-center justify-center">
-                  <GraduationCap className="h-6 w-6 text-white" />
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-gray-200 shadow-sm hover-lift">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Target className="h-8 w-8 text-orange" />
                 </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Expert Tutors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Connect with verified tutors from various subjects and academic levels
-                </CardDescription>
+                <h3 className="text-xl font-semibold text-dark-blue-gray mb-4">Personalized Learning</h3>
+                <p className="text-blue-gray">
+                  Get matched with tutors who understand your learning style and academic goals.
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-blue-gray rounded-lg flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-white" />
+            <Card className="border-gray-200 shadow-sm hover-lift">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Zap className="h-8 w-8 text-orange" />
                 </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Flexible Scheduling</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Book sessions that fit your schedule with easy calendar integration
-                </CardDescription>
+                <h3 className="text-xl font-semibold text-dark-blue-gray mb-4">Flexible Scheduling</h3>
+                <p className="text-blue-gray">
+                  Book sessions that fit your schedule with our easy-to-use calendar system.
+                </p>
               </CardContent>
             </Card>
 
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-dark-blue-gray rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
+            <Card className="border-gray-200 shadow-sm hover-lift">
+              <CardContent className="p-8 text-center">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Award className="h-8 w-8 text-orange" />
                 </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Peer Learning</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Learn from fellow students who excel in their subjects
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-orange rounded-lg flex items-center justify-center">
-                  <Star className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Quality Assured</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Rate and review tutors to ensure high-quality learning experiences
-                </CardDescription>
+                <h3 className="text-xl font-semibold text-dark-blue-gray mb-4">Rewards System</h3>
+                <p className="text-blue-gray">
+                  Earn points for every session and redeem them for exciting rewards and vouchers.
+                </p>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-dark-blue-gray">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 lg:mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Trusted by Students</h2>
-            <p className="text-gray-300 text-base sm:text-lg">
-              Join thousands who have transformed their academic journey
+      {/* Featured Tutors */}
+      <section className="py-20 px-4 bg-white/50">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-dark-blue-gray mb-4">Meet Our Top Tutors</h2>
+            <p className="text-xl text-blue-gray max-w-2xl mx-auto">
+              Learn from experienced educators who are passionate about your success.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">500+</div>
-              <div className="text-gray-300 text-sm sm:text-base">Active Students</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">100+</div>
-              <div className="text-gray-300 text-sm sm:text-base">Qualified Tutors</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">1000+</div>
-              <div className="text-gray-300 text-sm sm:text-base">Sessions Completed</div>
-            </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {featuredTutors.map((tutor) => (
+              <Card key={tutor.id} className="border-gray-200 shadow-sm hover-lift">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4 mb-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={tutor.image || "/placeholder.svg"} alt={tutor.name} />
+                      <AvatarFallback className="bg-orange text-white text-lg">{tutor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-dark-blue-gray">{tutor.name}</h3>
+                        {tutor.verified && <CheckCircle className="h-4 w-4 text-green-500" />}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm text-blue-gray">{tutor.rating}</span>
+                        </div>
+                        <span className="text-gray-300">•</span>
+                        <span className="text-sm text-blue-gray">{tutor.sessions} sessions</span>
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        <MapPin className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs text-gray-500">{tutor.location}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {tutor.subjects.map((subject) => (
+                      <Badge key={subject} variant="outline" className="text-xs border-gray-300 text-blue-gray">
+                        {subject}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold text-orange">RM{tutor.hourlyRate}/hr</span>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowRegisterModal(true)}
+                      className="bg-orange hover:bg-orange-600"
+                    >
+                      Book Session
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-6">Why Students Choose Tutortots</h2>
-              <p className="text-lg sm:text-xl text-blue-gray mb-8">
-                Experience the difference with our comprehensive learning platform designed for academic success.
-              </p>
+      {/* Testimonials */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-dark-blue-gray mb-4">What Our Students Say</h2>
+            <p className="text-xl text-blue-gray max-w-2xl mx-auto">
+              Real stories from students who achieved their academic goals with us.
+            </p>
+          </div>
 
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-orange rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Shield className="h-5 w-5 text-white" />
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="border-gray-200 shadow-sm hover-lift">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    ))}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-dark-blue-gray mb-2">Verified Excellence</h3>
-                    <p className="text-blue-gray text-sm sm:text-base">
-                      All tutors are verified Sunway University students or faculty with proven credentials.
-                    </p>
+                  <p className="text-blue-gray mb-6 italic">"{testimonial.content}"</p>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={testimonial.image || "/placeholder.svg"} alt={testimonial.name} />
+                      <AvatarFallback className="bg-orange text-white text-sm">
+                        {testimonial.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium text-dark-blue-gray">{testimonial.name}</div>
+                      <div className="text-sm text-blue-gray">{testimonial.role}</div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-blue-gray rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Clock className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-dark-blue-gray mb-2">Flexible Learning</h3>
-                    <p className="text-blue-gray text-sm sm:text-base">
-                      Book sessions that fit your schedule with easy rescheduling and 24/7 access.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-dark-blue-gray rounded-lg flex items-center justify-center flex-shrink-0">
-                    <BookOpen className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-dark-blue-gray mb-2">Comprehensive Support</h3>
-                    <p className="text-blue-gray text-sm sm:text-base">
-                      Get help across 50+ subjects with personalized teaching methods.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto lg:max-w-none">
-              <Card className="card-clean text-center p-4 sm:p-6">
-                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">50+</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Subjects</div>
+                </CardContent>
               </Card>
-
-              <Card className="card-clean text-center p-4 sm:p-6 mt-4 sm:mt-8">
-                <Star className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">4.8/5</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Rating</div>
-              </Card>
-
-              <Card className="card-clean text-center p-4 sm:p-6 -mt-2 sm:-mt-4">
-                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">95%</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Success Rate</div>
-              </Card>
-
-              <Card className="card-clean text-center p-4 sm:p-6 mt-2 sm:mt-4">
-                <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">24/7</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Access</div>
-              </Card>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-dark-blue-gray mb-6">
-            Ready to Start Learning?
-          </h2>
-          <p className="text-lg sm:text-xl text-blue-gray mb-8 max-w-2xl mx-auto">
-            Join thousands of Sunway University students who are already achieving their academic goals.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
-            <Button
-              size="lg"
-              className="px-6 sm:px-8 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
-              onClick={() => setShowRegisterModal(true)}
-            >
-              Get Started Today
-              <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-            </Button>
-
-            <Button
-              size="lg"
-              variant="outline"
-              className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-base sm:text-lg bg-transparent"
-              onClick={() => setShowLoginModal(true)}
-            >
-              Sign In
-            </Button>
+      <section className="py-20 px-4 bg-gradient-to-r from-orange to-orange-600">
+        <div className="container mx-auto text-center">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-white mb-6">Ready to Start Your Learning Journey?</h2>
+            <p className="text-xl text-orange-100 mb-8">
+              Join thousands of students who have already improved their grades with our expert tutors.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                onClick={() => setShowRegisterModal(true)}
+                className="bg-white text-orange hover:bg-gray-50 px-8 py-4 text-lg"
+              >
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setShowLoginModal(true)}
+                className="border-white text-white hover:bg-white/10 px-8 py-4 text-lg"
+              >
+                Sign In
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-dark-blue-gray text-white py-8 sm:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center space-x-2 mb-4">
-                <GraduationCap className="h-6 w-6 text-orange" />
-                <span className="text-lg font-bold">Tutortots</span>
+      <footer className="bg-dark-blue-gray text-white py-12 px-4">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange to-orange-600 rounded-lg flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-lg font-bold">Sunway Tutoring</h3>
               </div>
               <p className="text-gray-300 text-sm">
-                Connecting Sunway University students with qualified tutors for academic success.
+                Empowering students to achieve academic excellence through personalized tutoring and innovative learning
+                solutions.
               </p>
             </div>
+
             <div>
-              <h3 className="font-semibold mb-4">Platform</h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
+              <h4 className="font-semibold mb-4">For Students</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>
                   <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
-                    Register
+                    Find Tutors
                   </button>
                 </li>
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Book Sessions
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Rewards Program
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Track Progress
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">For Tutors</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Join as Tutor
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Manage Schedule
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Earn Rewards
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Resources
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold mb-4">Account</h4>
+              <ul className="space-y-2 text-sm text-gray-300">
                 <li>
                   <button onClick={() => setShowLoginModal(true)} className="hover:text-orange transition-colors">
                     Sign In
                   </button>
                 </li>
                 <li>
-                  <Link href="#features" className="hover:text-orange transition-colors">
-                    Features
-                  </Link>
+                  <button onClick={() => setShowRegisterModal(true)} className="hover:text-orange transition-colors">
+                    Create Account
+                  </button>
                 </li>
                 <li>
-                  <Link href="/about" className="hover:text-orange transition-colors">
-                    About
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Help Center
+                  <a href="/about" className="hover:text-orange transition-colors">
+                    About Us
                   </a>
                 </li>
                 <li>
                   <a href="#" className="hover:text-orange transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    FAQ
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">University</h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Sunway University
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Academic Calendar
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Student Portal
+                    Contact
                   </a>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300 text-sm">
-            <p>&copy; 2024 Tutortots. All rights reserved.</p>
+
+          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
+            <p>&copy; 2024 Sunway Tutoring Platform. All rights reserved.</p>
           </div>
         </div>
       </footer>
@@ -403,26 +463,20 @@ export default function HomePage() {
       {/* Login Modal */}
       <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
         <DialogContent className="sm:max-w-md">
-          <LoginForm
-            onSuccess={() => setShowLoginModal(false)}
-            onSwitchToRegister={() => {
-              setShowLoginModal(false)
-              setShowRegisterModal(true)
-            }}
-          />
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-dark-blue-gray">Welcome Back</DialogTitle>
+          </DialogHeader>
+          <LoginForm onSwitchToRegister={switchToRegister} />
         </DialogContent>
       </Dialog>
 
       {/* Register Modal */}
       <Dialog open={showRegisterModal} onOpenChange={setShowRegisterModal}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <RegisterForm
-            onSuccess={() => setShowRegisterModal(false)}
-            onSwitchToLogin={() => {
-              setShowRegisterModal(false)
-              setShowLoginModal(true)
-            }}
-          />
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-dark-blue-gray">Get Started</DialogTitle>
+          </DialogHeader>
+          <RegisterForm onSwitchToLogin={switchToLogin} />
         </DialogContent>
       </Dialog>
     </div>
