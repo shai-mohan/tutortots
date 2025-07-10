@@ -49,8 +49,7 @@ interface Student {
 }
 
 interface FeedbackStats {
-  totalFeedback: number
-  averageRating: number
+  sentimentRating: number
   totalRatings: number
 }
 
@@ -101,32 +100,21 @@ export default function TutorDashboard() {
           return
         }
 
-        // Fetch feedback statistics
-        const { data: feedbackData, error: feedbackError } = await supabase
-          .from("feedback")
-          .select(`
-        rating,
-        sessions!inner (
-          tutor_id
-        )
-      `)
-          .eq("sessions.tutor_id", user.id)
+        // Fetch sentiment rating from tutor's profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("sentiment_rating, sentiment_total_ratings")
+          .eq("id", user.id)
+          .single()
 
-        if (feedbackError) {
-          console.error("Error fetching feedback:", feedbackError)
+        if (profileError) {
+          console.error("Error fetching sentiment stats:", profileError)
+        } else if (profile) {
+          setFeedbackStats({
+            sentimentRating: profile.sentiment_rating ?? 0,
+            totalRatings: profile.sentiment_total_ratings ?? 0,
+          })
         }
-
-        // Calculate feedback statistics
-        const totalFeedback = feedbackData?.length || 0
-        const ratingsOnly = feedbackData?.filter((f) => f.rating !== null).map((f) => f.rating!) || []
-        const totalRatings = ratingsOnly.length
-        const averageRating = totalRatings > 0 ? ratingsOnly.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
-
-        setFeedbackStats({
-          totalFeedback,
-          averageRating,
-          totalRatings,
-        })
 
         // Create a map of student IDs to names
         const studentMap: Record<string, string> = {}
@@ -340,10 +328,19 @@ export default function TutorDashboard() {
               </Card>
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-yellow-600">{feedbackStats.averageRating.toFixed(1)}</div>
-                  <p className="text-sm text-blue-gray">Average Rating</p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {feedbackStats.sentimentRating.toFixed(1)}
+                    </div>
+                    <MessageSquare className="h-5 w-5 text-yellow-600" />
+                  </div>
+                  <p className="text-sm text-blue-gray">Avg. Sentiment Rating</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Based on {feedbackStats.totalRatings} feedback
+                  </p>
                 </CardContent>
               </Card>
+
               <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-6">
                   <div className="text-2xl font-bold text-dark-blue-gray">{feedbackStats.totalRatings}</div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { supabase } from "@/lib/supabase" // adjust path if needed
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth-provider"
@@ -10,6 +11,7 @@ import Link from "next/link"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { LoginForm } from "@/components/login-form"
 import { RegisterForm } from "@/components/register-form"
+import CountUp from "react-countup"
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -17,6 +19,31 @@ export default function HomePage() {
 
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
+
+  const [stats, setStats] = useState({
+  students: 0,
+  tutors: 0,
+  sessions: 0,
+})
+
+useEffect(() => {
+  const fetchStats = async () => {
+    const [studentsRes, tutorsRes, sessionsRes] = await Promise.all([
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "student"),
+      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "tutor"),
+      supabase.from("sessions").select("*", { count: "exact", head: true }),
+    ])
+
+    setStats({
+      students: studentsRes.count || 0,
+      tutors: tutorsRes.count || 0,
+      sessions: sessionsRes.count || 0,
+    })
+  }
+
+  fetchStats()
+}, [])
+
 
   useEffect(() => {
     if (user) {
@@ -53,6 +80,9 @@ export default function HomePage() {
               </Link>
               <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
                 About
+              </Link>
+              <Link href="/tutors" className="text-blue-gray hover:text-orange transition-colors">
+                Tutors
               </Link>
               <Link href="#contact" className="text-blue-gray hover:text-orange transition-colors">
                 Contact
@@ -121,15 +151,21 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">500+</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">
+                <CountUp end={stats.students} duration={2} />+
+              </div>
               <div className="text-gray-300 text-sm sm:text-base">Active Students</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">100+</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">
+                <CountUp end={stats.tutors} duration={2} />
+              </div>
               <div className="text-gray-300 text-sm sm:text-base">Qualified Tutors</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">1000+</div>
+              <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">
+                <CountUp end={stats.sessions} duration={2} />
+              </div>
               <div className="text-gray-300 text-sm sm:text-base">Sessions Completed</div>
             </div>
           </div>
@@ -264,7 +300,7 @@ export default function HomePage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/login" className="hover:text-orange transition-colors">
+                  <Link href="/" className="hover:text-orange transition-colors">
                     Login
                   </Link>
                 </li>

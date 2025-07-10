@@ -1,15 +1,15 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Star, Send } from "lucide-react"
+import { Send } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { analyzeSentimentVader } from "@/lib/local-sentiment"
 
 interface FeedbackFormProps {
   sessionId: string
@@ -19,19 +19,17 @@ interface FeedbackFormProps {
 }
 
 export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitted }: FeedbackFormProps) {
-  const [rating, setRating] = useState(0)
   const [comment, setComment] = useState("")
-  const [hoveredRating, setHoveredRating] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (rating === 0 && comment.trim() === "") {
+    if (comment.trim() === "") {
       toast({
         title: "Feedback Required",
-        description: "Please provide either a rating or written feedback",
+        description: "Please write some feedback before submitting.",
         variant: "destructive",
       })
       return
@@ -40,61 +38,72 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
     setIsSubmitting(true)
 
     try {
-      const { error } = await supabase.from("feedback").insert({
+      // Insert new feedback
+      const { error: insertError } = await supabase.from("feedback").insert({
         session_id: sessionId,
-        rating: rating > 0 ? rating : null,
-        comment: comment.trim() || null,
+        comment: comment.trim(),
       })
 
-      if (error) {
-        toast({
-          title: "Submission Failed",
-          description: error.message,
-          variant: "destructive",
+      if (insertError) {
+        throw insertError
+      }
+
+      // Get the tutor ID from the session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from("sessions")
+        .select("tutor_id")
+        .eq("id", sessionId)
+        .single()
+
+      if (sessionError || !sessionData?.tutor_id) throw sessionError
+
+      const tutorId = sessionData.tutor_id
+
+      // Get all comments for sessions by this tutor
+      const { data: sessionIdsData } = await supabase
+        .from("sessions")
+        .select("id")
+        .eq("tutor_id", tutorId)
+
+      const sessionIds = sessionIdsData?.map((s) => s.id) || []
+
+      if (sessionIds.length === 0) throw new Error("No sessions found for tutor.")
+
+      const { data: feedbacks } = await supabase
+        .from("feedback")
+        .select("comment")
+        .in("session_id", sessionIds)
+
+      const validComments = feedbacks?.filter((f) => f.comment?.trim()) || []
+
+      const sentimentScores = validComments.map((f) =>
+        analyzeSentimentVader(f.comment)
+      )
+
+      const averageSentiment =
+        sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length
+
+      // Update tutor's profile with new sentiment rating
+      await supabase
+        .from("profiles")
+        .update({
+          sentiment_rating: parseFloat(averageSentiment.toFixed(2)),
+          sentiment_total_ratings: sentimentScores.length,
         })
-        return
-      }
-
-      // Update tutor's rating if a rating was provided
-      if (rating > 0) {
-        // Get current tutor rating data
-        const { data: sessionData } = await supabase.from("sessions").select("tutor_id").eq("id", sessionId).single()
-
-        if (sessionData) {
-          const { data: tutorData } = await supabase
-            .from("profiles")
-            .select("rating, total_ratings")
-            .eq("id", sessionData.tutor_id)
-            .single()
-
-          if (tutorData) {
-            const currentRating = tutorData.rating || 0
-            const currentTotal = tutorData.total_ratings || 0
-            const newTotal = currentTotal + 1
-            const newRating = (currentRating * currentTotal + rating) / newTotal
-
-            await supabase
-              .from("profiles")
-              .update({
-                rating: newRating,
-                total_ratings: newTotal,
-              })
-              .eq("id", sessionData.tutor_id)
-          }
-        }
-      }
+        .eq("id", tutorId)
 
       toast({
         title: "Feedback Submitted",
-        description: "Thank you for your feedback!",
+        description: "Thanks for helping us improve!",
       })
 
       onFeedbackSubmitted()
+      setComment("")
     } catch (error) {
       console.error("Error submitting feedback:", error)
       toast({
         title: "Submission Failed",
-        description: "An unexpected error occurred",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -106,7 +115,6 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Star className="h-5 w-5" style={{ color: "#FFA500" }} />
           Leave Feedback
         </CardTitle>
         <CardDescription>
@@ -115,36 +123,6 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Rating (Optional)</Label>
-            <div className="flex gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className="p-1 rounded transition-colors"
-                  onMouseEnter={() => setHoveredRating(i + 1)}
-                  onMouseLeave={() => setHoveredRating(0)}
-                  onClick={() => setRating(i + 1)}
-                >
-                  <Star
-                    className={`h-6 w-6 transition-colors ${
-                      i < (hoveredRating || rating) ? "text-orange-400" : "text-gray-300 hover:text-orange-300"
-                    }`}
-                    style={{
-                      fill: i < (hoveredRating || rating) ? "#FFA500" : "transparent",
-                    }}
-                  />
-                </button>
-              ))}
-            </div>
-            {rating > 0 && (
-              <p className="text-sm text-gray-600 mt-1">
-                {rating} star{rating !== 1 ? "s" : ""} selected
-              </p>
-            )}
-          </div>
-
           <div>
             <Label htmlFor="comment" className="text-sm font-medium mb-2 block">
               Written Feedback
@@ -163,8 +141,8 @@ export function FeedbackForm({ sessionId, tutorName, subject, onFeedbackSubmitte
 
           <Button
             type="submit"
-            disabled={isSubmitting || (rating === 0 && comment.trim() === "")}
-            className="w-full bg-orange-custom hover:bg-orange-600"
+            disabled={isSubmitting || comment.trim() === ""}
+            className="w-full bg-orange-600 hover:bg-orange-500"
           >
             {isSubmitting ? (
               "Submitting..."

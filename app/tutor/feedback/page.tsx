@@ -36,6 +36,11 @@ export default function TutorFeedback() {
     ratingDistribution: [0, 0, 0, 0, 0],
   })
 
+  const [sentimentStats, setSentimentStats] = useState({
+    sentimentRating: 0,
+    totalSentimentFeedback: 0,
+  })
+
   useEffect(() => {
     if (!user || user.role !== "tutor") {
       router.push("/")
@@ -106,6 +111,19 @@ export default function TutorFeedback() {
           averageRating,
           ratingDistribution: distribution,
         })
+        // Fetch sentiment rating from tutor's profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("sentiment_rating, sentiment_total_ratings")
+        .eq("id", user.id)
+        .single()
+
+      if (!profileError && profile) {
+        setSentimentStats({
+          sentimentRating: profile.sentiment_rating ?? 0,
+          totalSentimentFeedback: profile.sentiment_total_ratings ?? 0,
+        })
+      }
       } catch (error) {
         console.error("Error fetching feedback:", error)
       } finally {
@@ -167,6 +185,21 @@ export default function TutorFeedback() {
                   <p className="text-sm text-gray-600">Average Rating</p>
                 </CardContent>
               </Card>
+              <Card className="border-orange-100">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {sentimentStats.sentimentRating.toFixed(1)}
+                    </div>
+                    <Star className="h-5 w-5 fill-orange-400 text-orange-400" />
+                  </div>
+                  <p className="text-sm text-gray-600">Average Sentiment Analysis Rating</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Based on {sentimentStats.totalSentimentFeedback} text feedback{sentimentStats.totalSentimentFeedback !== 1 ? "s" : ""}
+                  </p>
+                </CardContent>
+              </Card>
+
               <Card className="border-orange-100">
                 <CardContent className="p-6">
                   <div className="space-y-1">
