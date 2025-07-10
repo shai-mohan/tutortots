@@ -540,14 +540,14 @@ export default function TutorAvailability() {
             <TabsList className="bg-white border border-gray-200">
               <TabsTrigger
                 value="recurring"
-                className="data-[state=active]:bg-orange data-[state=active]:text-white flex items-center gap-2"
+                className="data-[state=active]:bg-orange data-[state=active]:text-orange-500 flex items-center gap-2"
               >
                 <Repeat className="h-4 w-4" />
                 Recurring Weekly
               </TabsTrigger>
               <TabsTrigger
                 value="specific"
-                className="data-[state=active]:bg-orange data-[state=active]:text-white flex items-center gap-2"
+                className="data-[state=active]:bg-orange data-[state=active]:text-orange-500 flex items-center gap-2"
               >
                 <CalendarDays className="h-4 w-4" />
                 Specific Dates

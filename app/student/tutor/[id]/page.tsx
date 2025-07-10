@@ -51,7 +51,7 @@ export default function TutorDetailsPage() {
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 

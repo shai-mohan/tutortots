@@ -26,7 +26,7 @@ export default function AboutPage() {
               </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/login">
+              <Link href="/">
                 <Button variant="ghost">Login</Button>
               </Link>
               <Link href="/register">

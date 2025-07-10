@@ -78,7 +78,7 @@ export default function StudentRewards() {
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
@@ -251,15 +251,15 @@ export default function StudentRewards() {
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="rewards" className="space-y-6">
           <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="rewards" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+            <TabsTrigger value="rewards" className="data-[state=active]:bg-orange data-[state=active]:text-orange-500">
               <Gift className="h-4 w-4 mr-2" />
               Available Rewards
             </TabsTrigger>
-            <TabsTrigger value="vouchers" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+            <TabsTrigger value="vouchers" className="data-[state=active]:bg-orange data-[state=active]:text-orange-500">
               <Ticket className="h-4 w-4 mr-2" />
               My Vouchers
             </TabsTrigger>
-            <TabsTrigger value="history" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+            <TabsTrigger value="history" className="data-[state=active]:bg-orange data-[state=active]:text-orange-500">
               <Clock className="h-4 w-4 mr-2" />
               Points History
             </TabsTrigger>

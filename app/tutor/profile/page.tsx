@@ -37,7 +37,7 @@ export default function TutorProfile() {
   // Replace the useEffect with this updated version that fetches real feedback data
   useEffect(() => {
     if (!user || user.role !== "tutor") {
-      router.push("/login")
+      router.push("/")
       return
     }
 

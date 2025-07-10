@@ -46,7 +46,7 @@ export default function StudentCalendar() {
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 

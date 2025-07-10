@@ -100,82 +100,12 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-base sm:text-lg bg-transparent"
+                className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-orange text-base sm:text-lg bg-transparent"
                 onClick={() => setShowLoginModal(true)}
               >
                 Sign In
               </Button>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Why Choose Tutortots</h2>
-            <p className="text-lg sm:text-xl text-blue-gray max-w-2xl mx-auto">
-              Everything you need for academic success in one platform
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-orange rounded-lg flex items-center justify-center">
-                  <GraduationCap className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Expert Tutors</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Connect with verified tutors from various subjects and academic levels
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-blue-gray rounded-lg flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Flexible Scheduling</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Book sessions that fit your schedule with easy calendar integration
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-dark-blue-gray rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Peer Learning</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Learn from fellow students who excel in their subjects
-                </CardDescription>
-              </CardContent>
-            </Card>
-
-            <Card className="card-clean text-center">
-              <CardHeader className="pb-4">
-                <div className="w-12 h-12 mx-auto mb-4 bg-orange rounded-lg flex items-center justify-center">
-                  <Star className="h-6 w-6 text-white" />
-                </div>
-                <CardTitle className="text-dark-blue-gray text-lg">Quality Assured</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-blue-gray text-sm">
-                  Rate and review tutors to ensure high-quality learning experiences
-                </CardDescription>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </section>
@@ -206,80 +136,77 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-white">
+      {/* Features Section */}
+      <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-6">Why Students Choose Tutortots</h2>
-              <p className="text-lg sm:text-xl text-blue-gray mb-8">
-                Experience the difference with our comprehensive learning platform designed for academic success.
-              </p>
+          <div className="text-center mb-12 lg:mb-16">
+            <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Why Choose Tutortots</h2>
+            <p className="text-lg sm:text-xl text-blue-gray max-w-2xl mx-auto">
+              Everything you need for academic success in one platform
+            </p>
+          </div>         
 
-              <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-orange rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Shield className="h-5 w-5 text-white" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            <div className="group [perspective:1000px]">
+              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  <div className="w-12 h-12 mb-4 bg-orange rounded-lg flex items-center justify-center">
+                    <GraduationCap className="h-6 w-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-dark-blue-gray mb-2">Verified Excellence</h3>
-                    <p className="text-blue-gray text-sm sm:text-base">
-                      All tutors are verified Sunway University students or faculty with proven credentials.
-                    </p>
-                  </div>
+                  <h3 className="text-dark-blue-gray font-semibold text-lg">Expert Tutors</h3>
                 </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-blue-gray rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Clock className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-dark-blue-gray mb-2">Flexible Learning</h3>
-                    <p className="text-blue-gray text-sm sm:text-base">
-                      Book sessions that fit your schedule with easy rescheduling and 24/7 access.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-4">
-                  <div className="w-10 h-10 bg-dark-blue-gray rounded-lg flex items-center justify-center flex-shrink-0">
-                    <BookOpen className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-dark-blue-gray mb-2">Comprehensive Support</h3>
-                    <p className="text-blue-gray text-sm sm:text-base">
-                      Get help across 50+ subjects with personalized teaching methods.
-                    </p>
-                  </div>
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                  Connect with verified tutors from various subjects and academic levels
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 max-w-md mx-auto lg:max-w-none">
-              <Card className="card-clean text-center p-4 sm:p-6">
-                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">50+</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Subjects</div>
-              </Card>
-
-              <Card className="card-clean text-center p-4 sm:p-6 mt-4 sm:mt-8">
-                <Star className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">4.8/5</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Rating</div>
-              </Card>
-
-              <Card className="card-clean text-center p-4 sm:p-6 -mt-2 sm:-mt-4">
-                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">95%</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Success Rate</div>
-              </Card>
-
-              <Card className="card-clean text-center p-4 sm:p-6 mt-2 sm:mt-4">
-                <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-orange mx-auto mb-3" />
-                <div className="text-xl sm:text-2xl font-bold text-dark-blue-gray mb-1">24/7</div>
-                <div className="text-xs sm:text-sm text-blue-gray">Access</div>
-              </Card>
+            <div className="group [perspective:1000px]">
+              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-gray rounded-lg flex items-center justify-center">
+                    <Calendar className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-dark-blue-gray font-semibold text-lg">Flexible Scheduling</h3>
+                </div>
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                  Book sessions that fit your schedule with easy calendar integration
+                </div>
+              </div>
             </div>
+
+            <div className="group [perspective:1000px]">
+              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-dark-blue-gray rounded-lg flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-dark-blue-gray font-semibold text-lg">Peer Learning</h3>
+                </div>
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                  Learn from fellow students who excel in their subjects
+                </div>
+              </div>
+            </div>
+
+            <div className="group [perspective:1000px]">
+              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-orange rounded-lg flex items-center justify-center">
+                    <Star className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-dark-blue-gray font-semibold text-lg">Quality Assured</h3>
+                </div>
+                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                  Rate and review tutors to ensure high-quality learning experiences
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

@@ -28,7 +28,7 @@ export default function StudentProfile() {
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 

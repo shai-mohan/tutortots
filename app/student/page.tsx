@@ -419,7 +419,7 @@ export default function StudentDashboard() {
                               <span className="text-gray-300">•</span>
                               <span className="text-sm text-blue-gray">{tutor.totalSessions} sessions</span>
                               <span className="text-gray-300">•</span>
-                              <span className="text-sm font-medium text-orange">RM{tutor.hourlyRate}/hr</span>
+                              {/* <span className="text-sm font-medium text-orange">RM{tutor.hourlyRate}/hr</span> */}
                             </div>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {tutor.subjects.slice(0, 3).map((subject) => (

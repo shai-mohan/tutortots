@@ -38,7 +38,7 @@ export default function TutorFeedback() {
 
   useEffect(() => {
     if (!user || user.role !== "tutor") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
