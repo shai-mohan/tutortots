@@ -555,13 +555,13 @@ export default function AdminDashboard() {
 
         <Tabs defaultValue="pending" className="space-y-6">
           <TabsList className="bg-white border border-gray-200">
-            <TabsTrigger value="pending" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+            <TabsTrigger value="pending" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
               Pending Approvals
             </TabsTrigger>
-            <TabsTrigger value="verified" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+            <TabsTrigger value="verified" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
               Verified Users
             </TabsTrigger>
-            <TabsTrigger value="rewards" className="data-[state=active]:bg-orange data-[state=active]:text-white">
+            <TabsTrigger value="rewards" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
               Reward Management
             </TabsTrigger>
           </TabsList>

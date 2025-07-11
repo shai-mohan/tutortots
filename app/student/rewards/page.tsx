@@ -306,18 +306,25 @@ export default function StudentRewards() {
 
                     return (
                       <Card key={reward.id} className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className={`p-2 rounded-lg ${colorClass}`}>
-                              <IconComponent className="h-6 w-6" />
+                          {reward.image_url && (
+                            <img
+                              src={reward.image_url}
+                              alt={reward.title}
+                              className="w-full h-40 object-cover rounded-t-md"
+                            />
+                          )}
+                          <CardHeader>
+                            <div className="flex items-start justify-between">
+                              <div className={`p-2 rounded-lg ${colorClass}`}>
+                                <IconComponent className="h-6 w-6" />
+                              </div>
+                              <Badge variant="outline" className="text-orange border-orange">
+                                RM{reward.value_rm}
+                              </Badge>
                             </div>
-                            <Badge variant="outline" className="text-orange border-orange">
-                              RM{reward.value_rm}
-                            </Badge>
-                          </div>
-                          <CardTitle className="text-lg text-dark-blue-gray">{reward.title}</CardTitle>
-                          <CardDescription className="text-blue-gray">{reward.brand}</CardDescription>
-                        </CardHeader>
+                            <CardTitle className="text-lg text-dark-blue-gray">{reward.title}</CardTitle>
+                            <CardDescription className="text-blue-gray">{reward.brand}</CardDescription>
+                          </CardHeader>
                         <CardContent className="space-y-4">
                           <p className="text-sm text-blue-gray">{reward.description}</p>
 

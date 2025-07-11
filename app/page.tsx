@@ -76,7 +76,7 @@ useEffect(() => {
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
               <Link href="#features" className="text-blue-gray hover:text-orange transition-colors">
-                Features
+                What We Offer
               </Link>
               <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
                 About

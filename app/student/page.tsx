@@ -235,7 +235,7 @@ export default function StudentDashboard() {
                 <span className="font-medium">{user.points || 0} points</span>
               </div>
               <Avatar className="h-8 w-8">
-                <AvatarImage src={user.profilePhotoUrl || "/placeholder.svg"} alt={user.name} />
+                <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
                 <AvatarFallback className="bg-orange text-white text-xs">{user.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <span>Welcome, {user.name}</span>
