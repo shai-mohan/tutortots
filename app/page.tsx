@@ -26,6 +26,39 @@ export default function HomePage() {
   sessions: 0,
 })
 
+const [topTutors, setTopTutors] = useState<any[]>([])
+
+useEffect(() => {
+  const fetchTopTutors = async () => {
+  const { data: tutors, error } = await supabase
+    .from("profiles")
+    .select("id, name, profile_photo_url, subjects, sentiment_rating")
+    .eq("role", "tutor")
+    .eq("verified", true)
+    .gt("sentiment_rating", 0) // Optional: only include tutors with some rating
+    .order("sentiment_rating", { ascending: false })
+    .limit(4)
+
+  if (error || !tutors) {
+    console.error("Error fetching top tutors", error)
+    return
+  }
+
+  const enrichedTutors = tutors.map((tutor) => ({
+    id: tutor.id,
+    full_name: tutor.name,
+    avatar_url: tutor.profile_photo_url,
+    course: tutor.subjects?.[0] || "N/A",
+    rating: tutor.sentiment_rating ?? 0,
+  }))
+
+  setTopTutors(enrichedTutors)
+}
+
+
+  fetchTopTutors()
+}, [])
+
 useEffect(() => {
   const fetchStats = async () => {
     const [studentsRes, tutorsRes, sessionsRes] = await Promise.all([
@@ -81,9 +114,9 @@ useEffect(() => {
               <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
                 About
               </Link>
-              <Link href="/tutors" className="text-blue-gray hover:text-orange transition-colors">
+              {/* <Link href="/tutors" className="text-blue-gray hover:text-orange transition-colors">
                 Tutors
-              </Link>
+              </Link> */}
             </div>
 
             {/* Auth Buttons */}
@@ -168,6 +201,53 @@ useEffect(() => {
           </div>
         </div>
       </section>
+
+      {/* Top Tutors Section */}
+<section className="py-12 sm:py-16 lg:py-20 bg-white">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-10">
+      <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Meet Our Top Tutors</h2>
+      <p className="text-blue-gray text-base sm:text-lg">
+        Explore a few of our expert tutors—more waiting inside!
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {topTutors.map((tutor) => (
+        <div
+          key={tutor.id}
+          onClick={() => setShowLoginModal(true)}
+          className="cursor-pointer group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow hover:shadow-lg transition"
+        >
+          <img
+            src={tutor.avatar_url || "/images/default-avatar.png"}
+            alt={tutor.full_name}
+            className="w-full h-48 object-cover"
+          />
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-dark-blue-gray">{tutor.full_name}</h3>
+            <p className="text-sm text-blue-gray">{tutor.course}</p>
+            <div className="flex items-center mt-2 text-orange text-sm">
+              <Star className="w-4 h-4 mr-1" />
+              {tutor.rating.toFixed(1)} / 5
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <div className="text-center mt-10">
+      <Button
+        className="px-6 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
+        onClick={() => setShowLoginModal(true)}
+      >
+        View More Tutors
+        <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+      </Button>
+    </div>
+  </div>
+</section>
+
 
       {/* Features Section */}
       <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
