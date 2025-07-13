@@ -84,9 +84,6 @@ useEffect(() => {
               <Link href="/tutors" className="text-blue-gray hover:text-orange transition-colors">
                 Tutors
               </Link>
-              <Link href="#contact" className="text-blue-gray hover:text-orange transition-colors">
-                Contact
-              </Link>
             </div>
 
             {/* Auth Buttons */}
@@ -183,15 +180,28 @@ useEffect(() => {
           </div>         
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            
             <div className="group [perspective:1000px]">
               <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  <div className="w-12 h-12 mb-4 bg-orange rounded-lg flex items-center justify-center">
-                    <GraduationCap className="h-6 w-6 text-white" />
+                {/* Front face with dimmed image, orange icon, white title */}
+                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  {/* Background image + dim overlay */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center scale-105"
+                    style={{ backgroundImage: `url("/images/feature1.jpg")` }}
+                  />
+                  <div className="absolute inset-0 bg-black/60" />
+                  {/* Icon and Title */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                      <GraduationCap className="h-8 w-8 text-white" />
+                      </div> 
+                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                      Expert Tutors
+                    </h3>
                   </div>
-                  <h3 className="text-dark-blue-gray font-semibold text-lg">Expert Tutors</h3>
                 </div>
+                {/* Back face with description */}
                 <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
                   Connect with verified tutors from various subjects and academic levels
                 </div>
@@ -200,13 +210,25 @@ useEffect(() => {
 
             <div className="group [perspective:1000px]">
               <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-gray rounded-lg flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-white" />
+                {/* Front face with dimmed image, orange icon, white title */}
+                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  {/* Background image + dim overlay */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center scale-105"
+                    style={{ backgroundImage: `url("/images/feature2.jpg")` }}
+                  />
+                  <div className="absolute inset-0 bg-black/60" />
+                  {/* Icon and Title */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                      <Calendar className="h-8 w-8 text-white" />
+                      </div> 
+                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                      Flexible Scheduling
+                    </h3>
                   </div>
-                  <h3 className="text-dark-blue-gray font-semibold text-lg">Flexible Scheduling</h3>
                 </div>
+                {/* Back face with description */}
                 <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
                   Book sessions that fit your schedule with easy calendar integration
                 </div>
@@ -215,13 +237,25 @@ useEffect(() => {
 
             <div className="group [perspective:1000px]">
               <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-dark-blue-gray rounded-lg flex items-center justify-center">
-                    <Users className="h-6 w-6 text-white" />
+                {/* Front face with dimmed image, orange icon, white title */}
+                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  {/* Background image + dim overlay */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center scale-105"
+                    style={{ backgroundImage: `url("/images/feature3.jpg")` }}
+                  />
+                  <div className="absolute inset-0 bg-black/60" />
+                  {/* Icon and Title */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                      <Users className="h-8 w-8 text-white" />
+                      </div> 
+                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                      Peer Learning
+                    </h3>
                   </div>
-                  <h3 className="text-dark-blue-gray font-semibold text-lg">Peer Learning</h3>
                 </div>
+                {/* Back face with description */}
                 <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
                   Learn from fellow students who excel in their subjects
                 </div>
@@ -230,19 +264,30 @@ useEffect(() => {
 
             <div className="group [perspective:1000px]">
               <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-orange rounded-lg flex items-center justify-center">
-                    <Star className="h-6 w-6 text-white" />
+                {/* Front face with dimmed image, orange icon, white title */}
+                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                  {/* Background image + dim overlay */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center scale-105"
+                    style={{ backgroundImage: `url("/images/feature4.jpg")` }}
+                  />
+                  <div className="absolute inset-0 bg-black/60" />
+                  {/* Icon and Title */}
+                  <div className="relative z-10 flex flex-col items-center">
+                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                      <Star className="h-8 w-8 text-white" />
+                      </div> 
+                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                      Quality Assured
+                    </h3>
                   </div>
-                  <h3 className="text-dark-blue-gray font-semibold text-lg">Quality Assured</h3>
                 </div>
+                {/* Back face with description */}
                 <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
                   Rate and review tutors to ensure high-quality learning experiences
                 </div>
               </div>
             </div>
-
           </div>
         </div>
       </section>

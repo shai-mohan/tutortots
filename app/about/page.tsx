@@ -21,9 +21,6 @@ export default function AboutPage() {
               <Link href="/about" className="text-blue-600 font-medium">
                 About
               </Link>
-              <Link href="#contact" className="text-gray-600 hover:text-gray-900">
-                Contact
-              </Link>
             </div>
             <div className="flex items-center space-x-4">
               <Link href="/">
