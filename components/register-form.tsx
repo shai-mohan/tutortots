@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/components/auth-provider"
 import { User, Mail, Lock, Eye, EyeOff, Loader2, GraduationCap } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 interface RegisterFormProps {
   onSuccess: () => void
@@ -53,6 +54,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [qualificationFile, setQualificationFile] = useState<File | null>(null)
 
   const { register } = useAuth()
 
@@ -67,6 +69,12 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         ? prev.subjects.filter((s) => s !== subject)
         : [...prev.subjects, subject],
     }))
+  }
+
+  const handleQualificationFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setQualificationFile(e.target.files[0])
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,10 +102,45 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
       return
     }
 
+    if (formData.role === "tutor" && !qualificationFile) {
+      setError("Please upload your qualification document")
+      return
+    }
+
     setIsLoading(true)
 
     try {
-      const success = await register(formData)
+      let qualificationDocumentUrl = null
+      let qualificationDocumentName = null
+      let qualificationDocumentType = null
+      let qualificationDocumentSize = null
+
+      if (formData.role === "tutor" && qualificationFile) {
+        // Upload to Supabase Storage
+        const fileExt = qualificationFile.name.split('.').pop()
+        const filePath = `qualifications/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, qualificationFile)
+        if (uploadError) {
+          setError("Failed to upload qualification document: " + uploadError.message)
+          setIsLoading(false)
+          return
+        }
+        const { data: publicUrlData } = supabase.storage.from('documents').getPublicUrl(filePath)
+        qualificationDocumentUrl = publicUrlData?.publicUrl || null
+        qualificationDocumentName = qualificationFile.name
+        qualificationDocumentType = qualificationFile.type
+        qualificationDocumentSize = qualificationFile.size
+      }
+
+      const success = await register({
+        ...formData,
+        qualificationDocumentUrl,
+        qualificationDocumentName,
+        qualificationDocumentType,
+        qualificationDocumentSize,
+      })
       if (success) {
         onSuccess()
       }
@@ -271,6 +314,23 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
                 className="border-gray-300 focus:border-orange focus:ring-orange"
                 rows={3}
               />
+            </div>
+          )}
+
+          {formData.role === "tutor" && (
+            <div className="space-y-2">
+              <Label className="text-dark-blue-gray font-medium">Qualification Document</Label>
+              <Input
+                type="file"
+                accept="application/pdf,image/*"
+                onChange={handleQualificationFileChange}
+                className="border-gray-300 focus:border-orange focus:ring-orange"
+                required={formData.role === "tutor"}
+              />
+              <p className="text-xs text-blue-gray">Upload your degree, certificate, or other proof of qualification (PDF, JPG, PNG).</p>
+              {qualificationFile && (
+                <span className="text-xs text-green-700">Selected: {qualificationFile.name}</span>
+              )}
             </div>
           )}
 

@@ -672,12 +672,26 @@ export default function AdminDashboard() {
                                       pendingUser.qualificationDocumentType || "",
                                     )
                                   }
-                                  className="text-xs border-gray-300 text-blue-gray hover:bg-gray-50"
+                                  className="text-xs border-gray-300 text-blue-gray hover:bg-gray-50 mb-2"
                                 >
                                   <Eye className="h-3 w-3 mr-1" />
                                   {pendingUser.qualificationDocumentName || "View Document"}
                                   <ExternalLink className="h-3 w-3 ml-1" />
                                 </Button>
+                                {/* Inline preview for image or PDF */}
+                                {pendingUser.qualificationDocumentType?.includes("image") ? (
+                                  <img
+                                    src={pendingUser.qualificationDocumentUrl}
+                                    alt={pendingUser.qualificationDocumentName || "Qualification Document"}
+                                    className="max-w-xs max-h-48 border rounded mt-1"
+                                  />
+                                ) : pendingUser.qualificationDocumentType?.includes("pdf") ? (
+                                  <embed
+                                    src={pendingUser.qualificationDocumentUrl}
+                                    type="application/pdf"
+                                    className="w-full max-w-xs h-48 border rounded mt-1"
+                                  />
+                                ) : null}
                               </div>
                             )}
                           </div>

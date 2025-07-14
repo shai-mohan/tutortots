@@ -213,6 +213,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           bio: userData.bio || null,
           rating: 0,
           total_ratings: 0,
+          qualification_document_url: userData.qualificationDocumentUrl || null,
+          qualification_document_name: userData.qualificationDocumentName || null,
+          qualification_document_type: userData.qualificationDocumentType || null,
+          qualification_document_size: userData.qualificationDocumentSize || null,
         })
 
         if (profileError) {
