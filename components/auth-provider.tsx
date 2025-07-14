@@ -268,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("✅ Logout successful, redirecting to homepage...")
 
       // Force redirect to homepage
-      window.location.href = "/"
+      router.push("/")
 
       toast({
         title: "Logged out",

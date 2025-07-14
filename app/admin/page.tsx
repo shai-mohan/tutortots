@@ -293,6 +293,36 @@ export default function AdminDashboard() {
     }
   }
 
+  const unverifyUser = async (userId: string) => {
+    try {
+        const { error } = await supabase.from("profiles").update({ verified: false }).eq("id", userId)
+
+        if (error) {
+          toast({
+            title: "Unverify Failed",
+            description: error.message,
+            variant: "destructive",
+          })
+          return
+        }
+
+        toast({
+          title: "User Unverified",
+          description: "User is no longer verified",
+        })
+
+        setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, verified: false } : u)))
+      } catch (error) {
+        console.error("Error unverifying user:", error)
+        toast({
+          title: "Unverify Failed",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        })
+      }
+    }
+
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -757,6 +787,42 @@ export default function AdminDashboard() {
                                 </Button>
                               </div>
                             )}
+                            <div className="mt-3 flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => unverifyUser(verifiedUser.id)}
+                                className="text-xs text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                              >
+                                <XCircle className="w-4 h-4 mr-1" />
+                                Unverify
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="text-xs"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete this user? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => rejectUser(verifiedUser.id)}>Delete</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+
                           </div>
                         </div>
                       </div>

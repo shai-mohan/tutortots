@@ -12,6 +12,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { LoginForm } from "@/components/login-form"
 import { RegisterForm } from "@/components/register-form"
 import CountUp from "react-countup"
+import Lottie from "lottie-react"
+import loadingAnimation from "@/public/lottie/loading.json" // Adjust path if needed
 
 export default function HomePage() {
   const { user } = useAuth()
@@ -25,6 +27,28 @@ export default function HomePage() {
   tutors: 0,
   sessions: 0,
 })
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [fadeOut, setFadeOut] = useState(false)
+
+
+  const [animationData, setAnimationData] = useState(null)
+useEffect(() => {
+  fetch("/lottie/loading.json")
+    .then((res) => res.json())
+    .then(setAnimationData)
+}, [])
+
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setFadeOut(true)
+    setTimeout(() => {
+      setIsLoading(false)
+    }, 500) // match fade duration
+  }, 2000) // keep splash for 2s
+
+  return () => clearTimeout(timer)
+}, [])
 
 const [topTutors, setTopTutors] = useState<any[]>([])
 
@@ -94,10 +118,30 @@ useEffect(() => {
     return null // Will redirect
   }
 
+  if (isLoading) {
+  return (
+    <div
+  className={`flex items-center justify-center h-screen bg-white transition-all duration-500 ease-in-out transform ${
+    fadeOut
+      ? "opacity-0 scale-95 blur-sm translate-y-4"
+      : "opacity-100 scale-100 blur-0 translate-y-0"
+  }`}
+>
+  <Lottie
+    animationData={loadingAnimation}
+    loop
+    autoplay
+    className="w-64 h-64"
+  />
+</div>
+
+  )
+}
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navbar */}
-      <nav className="border-b border-gray-200 bg-white sticky top-0 z-50">
+      <nav className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-white/30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo/Brand */}
@@ -114,13 +158,10 @@ useEffect(() => {
               <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
                 About
               </Link>
-              {/* <Link href="/tutors" className="text-blue-gray hover:text-orange transition-colors">
-                Tutors
-              </Link> */}
             </div>
 
             {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <Button
                 variant="ghost"
                 className="text-blue-gray hover:text-orange"
@@ -132,43 +173,67 @@ useEffect(() => {
                 Get Started
               </Button>
             </div>
+
+            {/* Mobile Menu Button (Hamburger) */}
+            <div className="md:hidden">
+              {/* Add a menu button component here or use a Dialog to show mobile nav */}
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="py-12 sm:py-16 lg:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-dark-blue-gray mb-6 leading-tight">
-              Connect with Expert Tutors at <span className="text-orange">Tutortots</span>
-            </h1>
-            <p className="text-lg sm:text-xl text-blue-gray mb-8 leading-relaxed max-w-3xl mx-auto">
-              Transform your learning journey with personalized tutoring from Sunway University's finest educators. Book
-              sessions, get expert help, and achieve academic excellence.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
-              <Button
-                size="lg"
-                className="px-6 sm:px-8 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
-                onClick={() => setShowRegisterModal(true)}
-              >
-                Start Learning Today
-                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
 
-              <Button
-                variant="outline"
-                size="lg"
-                className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-orange text-base sm:text-lg bg-transparent"
-                onClick={() => setShowLoginModal(true)}
-              >
-                Sign In
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero Section */}
+      <section className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
+  {/* Background video */}
+  <video
+    className="absolute top-0 left-0 w-full h-full object-cover z-0"
+    autoPlay
+    loop
+    muted
+    playsInline
+    preload="auto"
+  >
+    <source src="/images/hero.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+
+  {/* Optional overlay for contrast */}
+  <div className="absolute inset-0 bg-black/0 z-10" />
+
+  {/* Foreground content */}
+  <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center max-w-4xl mx-auto">
+      <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
+        Connect with Expert Tutors at <span className="text-orange">Tutortots</span>
+      </h1>
+      <p className="text-lg sm:text-xl text-white mb-8 leading-relaxed max-w-3xl mx-auto">
+        Transform your learning journey with personalized tutoring from Sunway University's finest educators.
+        Book sessions, get expert help, and achieve academic excellence.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
+        <Button
+          size="lg"
+          className="px-6 sm:px-8 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
+          onClick={() => setShowRegisterModal(true)}
+        >
+          Start Learning Today
+          <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+        </Button>
+
+        <Button
+          variant="outline"
+          size="lg"
+          className="px-6 sm:px-8 py-3 border-white text-white hover:bg-white hover:text-orange text-base sm:text-lg bg-transparent"
+          onClick={() => setShowLoginModal(true)}
+        >
+          Sign In
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>
+
 
       {/* Stats Section */}
       <section className="py-12 sm:py-16 lg:py-20 bg-dark-blue-gray">
@@ -483,7 +548,7 @@ useEffect(() => {
             </div>
           </div>
           <div className="border-t border-gray-600 mt-8 pt-8 text-center text-gray-300 text-sm">
-            <p>&copy; 2024 Tutortots. All rights reserved.</p>
+            <p>&copy; 2025 Tutortots. All rights reserved.</p>
           </div>
         </div>
       </footer>
