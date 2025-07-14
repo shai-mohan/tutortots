@@ -63,8 +63,7 @@ export default function TutorDashboard() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats>({
-    totalFeedback: 0,
-    averageRating: 0,
+    sentimentRating: 0,
     totalRatings: 0,
   })
 
@@ -225,6 +224,36 @@ export default function TutorDashboard() {
       console.error("Error marking session completed:", error)
       toast({
         title: "Update Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Add reject/cancel logic
+  const rejectSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase.from("sessions").update({ status: "cancelled" }).eq("id", sessionId)
+
+      if (error) {
+        toast({
+          title: "Rejection Failed",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "Session Rejected",
+        description: "The session has been cancelled and the slot is now available again.",
+      })
+
+      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, status: "cancelled" as const } : s)))
+    } catch (error) {
+      console.error("Error rejecting session:", error)
+      toast({
+        title: "Rejection Failed",
         description: "An unexpected error occurred",
         variant: "destructive",
       })
@@ -443,6 +472,15 @@ export default function TutorDashboard() {
                               >
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 Complete
+                              </Button>
+                              {/* Reject button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                                onClick={() => rejectSession(session.id)}
+                              >
+                                Reject
                               </Button>
                             </div>
                           </div>

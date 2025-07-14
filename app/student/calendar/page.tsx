@@ -144,6 +144,23 @@ export default function StudentCalendar() {
     window.location.reload()
   }
 
+  // Add cancel logic for students
+  const cancelSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase.from("sessions").update({ status: "cancelled" }).eq("id", sessionId)
+
+      if (error) {
+        alert("Cancellation failed: " + error.message)
+        return
+      }
+
+      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, status: "cancelled" as const } : s)))
+      alert("Session cancelled. The slot is now available again.")
+    } catch (error) {
+      alert("Cancellation failed: " + error)
+    }
+  }
+
   const upcomingSessions = sessions.filter((s) => s.status === "scheduled")
   const completedSessions = sessions.filter((s) => s.status === "completed")
 
@@ -213,6 +230,14 @@ export default function StudentCalendar() {
                           <Badge variant="outline" className="text-green-600 border-green-200">
                             Scheduled
                           </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full mt-2 border-red-300 text-red-600 hover:bg-red-50"
+                            onClick={() => cancelSession(session.id)}
+                          >
+                            Cancel
+                          </Button>
                           {session.zoom_link && (
                             <Button size="sm" className="w-full bg-orange-500 hover:bg-orange-600" asChild>
                               <a href={session.zoom_link} target="_blank" rel="noopener noreferrer">

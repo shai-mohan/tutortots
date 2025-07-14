@@ -48,6 +48,7 @@ export default function TutorDetailsPage() {
   const [selectedAvailability, setSelectedAvailability] = useState("")
   const [availabilityType, setAvailabilityType] = useState<"recurring" | "specific_date">("recurring")
   const [loading, setLoading] = useState(true)
+  const [sessions, setSessions] = useState<any[]>([])
 
   useEffect(() => {
     if (!user || user.role !== "student") {
@@ -117,6 +118,17 @@ export default function TutorDetailsPage() {
 
         if (!availabilityError && availabilityData) {
           setAvailability(availabilityData)
+        }
+
+        // Fetch all scheduled sessions for this tutor
+        const { data: sessionsData, error: sessionsError } = await supabase
+          .from("sessions")
+          .select("*")
+          .eq("tutor_id", params.id)
+          .eq("status", "scheduled")
+
+        if (!sessionsError && sessionsData) {
+          setSessions(sessionsData)
         }
       } catch (error) {
         console.error("Error fetching tutor:", error)
@@ -217,17 +229,70 @@ export default function TutorDetailsPage() {
     })
   }
 
-  const getAvailableSlots = () => {
-    if (!selectedSubject) return []
-    return availability.filter((a) => a.subject === selectedSubject && a.availability_type === availabilityType)
+  // Helper to check if a slot is booked
+  const isSlotBooked = (slot: Availability) => {
+    if (slot.availability_type === "specific_date") {
+      return sessions.some(
+        (s) =>
+          s.date === slot.specific_date &&
+          s.time === slot.start_time &&
+          s.status === "scheduled"
+      )
+    } else if (slot.availability_type === "recurring") {
+      // Find next occurrence of this recurring slot
+      const today = new Date()
+      const targetDay = slot.day_of_week!
+      const daysUntilTarget = (targetDay - today.getDay() + 7) % 7
+      const nextDate = new Date(today)
+      nextDate.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget))
+      const nextDateStr = nextDate.toISOString().split("T")[0]
+      return sessions.some(
+        (s) =>
+          s.date === nextDateStr &&
+          s.time === slot.start_time &&
+          s.status === "scheduled"
+      )
+    }
+    return false
   }
 
+  // Helper to check if a slot is in the past
+  const isSlotInPast = (slot: Availability) => {
+    const now = new Date()
+    if (slot.availability_type === "specific_date") {
+      const slotDate = new Date(slot.specific_date! + 'T' + slot.start_time)
+      return slotDate < now
+    } else if (slot.availability_type === "recurring") {
+      const today = new Date()
+      const targetDay = slot.day_of_week!
+      const daysUntilTarget = (targetDay - today.getDay() + 7) % 7
+      const nextDate = new Date(today)
+      nextDate.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget))
+      const slotDate = new Date(nextDate.toISOString().split("T")[0] + 'T' + slot.start_time)
+      return slotDate < now
+    }
+    return false
+  }
+
+  // Updated slot filters
   const getRecurringSlots = () => {
-    return availability.filter((a) => a.subject === selectedSubject && a.availability_type === "recurring")
+    return availability.filter(
+      (a) =>
+        a.subject === selectedSubject &&
+        a.availability_type === "recurring" &&
+        !isSlotBooked(a) &&
+        !isSlotInPast(a)
+    )
   }
 
   const getSpecificDateSlots = () => {
-    return availability.filter((a) => a.subject === selectedSubject && a.availability_type === "specific_date")
+    return availability.filter(
+      (a) =>
+        a.subject === selectedSubject &&
+        a.availability_type === "specific_date" &&
+        !isSlotBooked(a) &&
+        !isSlotInPast(a)
+    )
   }
 
   if (!tutor && !loading) return null
