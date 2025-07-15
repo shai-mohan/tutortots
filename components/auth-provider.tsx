@@ -313,8 +313,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Update local state
-      setUser({ ...user, ...userData })
+      // Fetch the latest profile from Supabase
+      const { data: profile, error: fetchError } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      if (fetchError || !profile) {
+        toast({
+          title: "Update failed",
+          description: fetchError?.message || "Could not fetch updated profile.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Update local state with fresh data
+      setUser({
+        id: user.id,
+        name: profile.name,
+        email: profile.email,
+        role: profile.role,
+        verified: profile.verified,
+        bio: profile.bio,
+        subjects: profile.subjects,
+        academicYear: profile.academic_year,
+        rating: profile.rating,
+        totalRatings: profile.total_ratings,
+        profileImage: profile.profile_photo_url,
+        points: profile.points || 0,
+      })
 
       toast({
         title: "Profile updated",

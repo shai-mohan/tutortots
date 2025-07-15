@@ -43,7 +43,11 @@ export default function StudentProfile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    updateUser(formData)
+    updateUser({
+      name: formData.name,
+      academicYear: formData.academicYear,
+      // profileImage is not updated here, only in handlePhotoUpdated
+    })
     toast({
       title: "Profile Updated",
       description: "Your profile has been updated successfully",
