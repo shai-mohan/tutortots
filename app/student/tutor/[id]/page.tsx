@@ -20,8 +20,9 @@ interface Tutor {
   email: string
   subjects: string[]
   bio: string
-  rating: number
+  sentimentRating: number
   totalRatings: number
+  totalSessions: number
   profilePhotoUrl?: string
 }
 
@@ -62,7 +63,7 @@ export default function TutorDetailsPage() {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("*")
+          .select("*, sentiment_rating, total_ratings")
           .eq("id", params.id)
           .eq("role", "tutor")
           .eq("verified", true)
@@ -74,24 +75,14 @@ export default function TutorDetailsPage() {
           return
         }
 
-        // Fetch real feedback data for this tutor
-        const { data: feedbackData, error: feedbackError } = await supabase
-          .from("feedback")
-          .select(`
-        rating,
-        sessions!inner (
-          tutor_id
-        )
-      `)
-          .eq("sessions.tutor_id", params.id)
-
-        let averageRating = 0
-        let totalRatings = 0
-
-        if (!feedbackError && feedbackData) {
-          const ratingsOnly = feedbackData.filter((f) => f.rating !== null).map((f) => f.rating!)
-          totalRatings = ratingsOnly.length
-          averageRating = totalRatings > 0 ? ratingsOnly.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
+        // Fetch real number of completed sessions for this tutor
+        const { count: completedSessionsCount, error: sessionsCountError } = await supabase
+          .from("sessions")
+          .select("id", { count: "exact", head: true })
+          .eq("tutor_id", params.id)
+          .eq("status", "completed")
+        if (sessionsCountError) {
+          console.error("Error fetching completed sessions count:", sessionsCountError)
         }
 
         setTutor({
@@ -100,8 +91,9 @@ export default function TutorDetailsPage() {
           email: data.email,
           subjects: data.subjects || [],
           bio: data.bio || "",
-          rating: averageRating,
-          totalRatings: totalRatings,
+          sentimentRating: data.sentiment_rating ?? 0,
+          totalRatings: data.total_ratings ?? 0,
+          totalSessions: completedSessionsCount || 0,
           profilePhotoUrl: data.profile_photo_url,
         })
 
@@ -336,8 +328,10 @@ export default function TutorDetailsPage() {
                         <CardTitle className="text-2xl text-dark-blue-gray">{tutor.name}</CardTitle>
                         <div className="flex items-center gap-1 mt-1">
                           <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                          <span className="text-lg font-medium text-dark-blue-gray">{tutor.rating.toFixed(1)}</span>
+                          <span className="text-lg font-medium text-dark-blue-gray">{tutor.sentimentRating.toFixed(1)}</span>
                           <span className="text-blue-gray">({tutor.totalRatings} reviews)</span>
+                          <span className="text-gray-300 mx-2">•</span>
+                          <span className="text-blue-gray text-base">{tutor.totalSessions} sessions</span>
                         </div>
                       </div>
                     </div>
@@ -394,8 +388,8 @@ export default function TutorDetailsPage() {
                     {selectedSubject && (
                       <Tabs
                         value={availabilityType}
-                        onValueChange={(value: "recurring" | "specific_date") => {
-                          setAvailabilityType(value)
+                        onValueChange={value => {
+                          setAvailabilityType(value as "recurring" | "specific_date")
                           setSelectedAvailability("")
                         }}
                       >

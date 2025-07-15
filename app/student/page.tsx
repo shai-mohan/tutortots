@@ -106,22 +106,38 @@ export default function StudentDashboard() {
         // Fetch tutors
         const { data: tutorsData, error: tutorsError } = await supabase
           .from("profiles")
-          .select("*")
+          .select("*, sentiment_rating")
           .eq("role", "tutor")
           .eq("verified", true)
 
         if (tutorsError) {
           console.error("Error fetching tutors:", tutorsError)
         } else {
-          const formattedTutors = tutorsData.map((tutor) => ({
+          // Fetch completed session counts for all tutors in parallel
+          const sessionCounts = await Promise.all(
+            tutorsData.map(async (tutor) => {
+              const { count, error: sessionError } = await supabase
+                .from("sessions")
+                .select("id", { count: "exact", head: true })
+                .eq("tutor_id", tutor.id)
+                .eq("status", "completed")
+              if (sessionError) {
+                console.error(`Error fetching sessions for tutor ${tutor.id}:`, sessionError)
+                return 0
+              }
+              return count || 0
+            })
+          )
+
+          const formattedTutors = tutorsData.map((tutor, idx) => ({
             id: tutor.id,
             name: tutor.name,
             email: tutor.email,
             subjects: tutor.subjects || [],
             bio: tutor.bio || "",
             hourlyRate: tutor.hourly_rate || 50,
-            rating: tutor.rating || 4.5,
-            totalSessions: tutor.total_sessions || 0,
+            rating: tutor.sentiment_rating ?? 0, // Use the sentiment_rating from profile
+            totalSessions: sessionCounts[idx], // Use the real completed session count
             profilePhotoUrl: tutor.profile_photo_url,
             location: tutor.location || "Kuala Lumpur",
             experience: tutor.experience || "2+ years",

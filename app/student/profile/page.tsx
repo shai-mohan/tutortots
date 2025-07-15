@@ -41,17 +41,25 @@ export default function StudentProfile() {
     setProfilePhoto(user.profileImage || "")
   }, [user, router])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    updateUser({
-      name: formData.name,
-      academicYear: formData.academicYear,
-      // profileImage is not updated here, only in handlePhotoUpdated
-    })
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been updated successfully",
-    })
+    try {
+      await updateUser({
+        name: formData.name,
+        academicYear: formData.academicYear,
+        // profileImage is not updated here, only in handlePhotoUpdated
+      })
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully",
+      })
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "There was a problem updating your profile. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handlePhotoUpdated = (photoUrl: string) => {
