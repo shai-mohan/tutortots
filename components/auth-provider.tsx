@@ -251,40 +251,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      console.log("🚪 Starting logout process...")
+      console.log("🚪 Starting logout process...");
 
       // Sign out from Supabase
-      const { error } = await supabase.auth.signOut()
+      const { error } = await supabase.auth.signOut();
 
-      if (error) {
-        console.error("❌ Logout error:", error)
+      // If the only error is AuthSessionMissingError, treat as success
+      if (error && error.name !== "AuthSessionMissingError") {
+        console.error("❌ Logout error:", error);
         toast({
           title: "Logout failed",
           description: "There was an error logging out. Please try again.",
           variant: "destructive",
-        })
-        return
+        });
+        return;
       }
 
       // Clear user state
-      setUser(null)
+      setUser(null);
 
-      console.log("✅ Logout successful, redirecting to homepage...")
+      console.log("✅ Logout successful, redirecting to homepage...");
 
       // Force redirect to homepage
-      router.push("/")
+      router.push("/");
 
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
-      })
+      });
     } catch (error) {
-      console.error("💥 Logout error:", error)
+      console.error("💥 Logout error:", error);
       toast({
         title: "Logout failed",
         description: "There was an error logging out. Please try again.",
         variant: "destructive",
-      })
+      });
     }
   }
 
