@@ -33,55 +33,56 @@ export default function HomePage() {
 
 
   const [animationData, setAnimationData] = useState(null)
-useEffect(() => {
-  fetch("/lottie/loading.json")
-    .then((res) => res.json())
-    .then(setAnimationData)
-}, [])
 
-useEffect(() => {
-  const timer = setTimeout(() => {
-    setFadeOut(true)
-    setTimeout(() => {
-      setIsLoading(false)
-    }, 500) // match fade duration
-  }, 2000) // keep splash for 2s
+  useEffect(() => {
+    fetch("/lottie/loading.json")
+      .then((res) => res.json())
+      .then(setAnimationData)
+  }, [])
 
-  return () => clearTimeout(timer)
-}, [])
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFadeOut(true)
+      setTimeout(() => {
+        setIsLoading(false)
+      }, 500) // match fade duration
+    }, 2000) // keep splash for 2s
 
-const [topTutors, setTopTutors] = useState<any[]>([])
+    return () => clearTimeout(timer)
+  }, [])
 
-useEffect(() => {
-  const fetchTopTutors = async () => {
-  const { data: tutors, error } = await supabase
-    .from("profiles")
-    .select("id, name, profile_photo_url, subjects, sentiment_rating")
-    .eq("role", "tutor")
-    .eq("verified", true)
-    .gt("sentiment_rating", 0) // Optional: only include tutors with some rating
-    .order("sentiment_rating", { ascending: false })
-    .limit(4)
+  const [topTutors, setTopTutors] = useState<any[]>([])
 
-  if (error || !tutors) {
-    console.error("Error fetching top tutors", error)
-    return
+  useEffect(() => {
+    const fetchTopTutors = async () => {
+    const { data: tutors, error } = await supabase
+      .from("profiles")
+      .select("id, name, profile_photo_url, subjects, sentiment_rating")
+      .eq("role", "tutor")
+      .eq("verified", true)
+      .gt("sentiment_rating", 0) // Optional: only include tutors with some rating
+      .order("sentiment_rating", { ascending: false })
+      .limit(4)
+
+    if (error || !tutors) {
+      console.error("Error fetching top tutors", error)
+      return
+    }
+
+    const enrichedTutors = tutors.map((tutor) => ({
+      id: tutor.id,
+      full_name: tutor.name,
+      avatar_url: tutor.profile_photo_url,
+      course: tutor.subjects?.[0] || "N/A",
+      rating: tutor.sentiment_rating ?? 0,
+    }))
+
+    setTopTutors(enrichedTutors)
   }
 
-  const enrichedTutors = tutors.map((tutor) => ({
-    id: tutor.id,
-    full_name: tutor.name,
-    avatar_url: tutor.profile_photo_url,
-    course: tutor.subjects?.[0] || "N/A",
-    rating: tutor.sentiment_rating ?? 0,
-  }))
 
-  setTopTutors(enrichedTutors)
-}
-
-
-  fetchTopTutors()
-}, [])
+    fetchTopTutors()
+  }, [])
 
 useEffect(() => {
   const fetchStats = async () => {
@@ -153,11 +154,17 @@ useEffect(() => {
             {/* Navigation Links */}
             <div className="hidden md:flex items-center space-x-8">
               <Link href="#features" className="text-blue-gray hover:text-orange transition-colors">
-                What We Offer
+                Why Us
               </Link>
-              <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
+              <Link href="#top-tutors" className="text-blue-gray hover:text-orange transition-colors">
+                Top Tutors
+              </Link>
+              <Link href="#how-to-start" className="text-blue-gray hover:text-orange transition-colors">
+                How To Start
+              </Link>
+              {/* <Link href="/about" className="text-blue-gray hover:text-orange transition-colors">
                 About
-              </Link>
+              </Link> */}
             </div>
 
             {/* Auth Buttons */}
@@ -185,54 +192,54 @@ useEffect(() => {
 
       {/* Hero Section */}
       <section className="relative py-12 sm:py-16 lg:py-20 overflow-hidden">
-  {/* Background video */}
-  <video
-    className="absolute top-0 left-0 w-full h-full object-cover z-0"
-    autoPlay
-    loop
-    muted
-    playsInline
-    preload="auto"
-  >
-    <source src="/images/hero.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
-
-  {/* Optional overlay for contrast */}
-  <div className="absolute inset-0 bg-black/0 z-10" />
-
-  {/* Foreground content */}
-  <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center max-w-4xl mx-auto">
-      <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
-        Connect with Expert Tutors at <span className="text-orange">Tutortots</span>
-      </h1>
-      <p className="text-lg sm:text-xl text-white mb-8 leading-relaxed max-w-3xl mx-auto">
-        Transform your learning journey with personalized tutoring from Sunway University's finest educators.
-        Book sessions, get expert help, and achieve academic excellence.
-      </p>
-      <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
-        <Button
-          size="lg"
-          className="px-6 sm:px-8 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
-          onClick={() => setShowRegisterModal(true)}
+        {/* Background video */}
+        <video
+          className="absolute top-0 left-0 w-full h-full object-cover z-0"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
         >
-          Start Learning Today
-          <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
+          <source src="/images/hero.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
 
-        <Button
-          variant="outline"
-          size="lg"
-          className="px-6 sm:px-8 py-3 border-white text-white hover:bg-white hover:text-orange text-base sm:text-lg bg-transparent"
-          onClick={() => setShowLoginModal(true)}
-        >
-          Sign In
-        </Button>
-      </div>
-    </div>
-  </div>
-</section>
+        {/* Optional overlay for contrast */}
+        <div className="absolute inset-0 bg-black/0 z-10" />
+
+        {/* Foreground content */}
+        <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-4xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-6 leading-tight">
+              Connect with Expert Tutors at <span className="text-orange">Tutortots</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-white mb-8 leading-relaxed max-w-3xl mx-auto">
+              Transform your learning journey with personalized tutoring from Sunway University's finest educators.
+              Book sessions, get expert help, and achieve academic excellence.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
+              <Button
+                size="lg"
+                className="px-6 sm:px-8 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
+                onClick={() => setShowRegisterModal(true)}
+              >
+                Start Learning Today
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-6 sm:px-8 py-3 border-white text-white hover:bg-white hover:text-orange text-base sm:text-lg bg-transparent"
+                onClick={() => setShowLoginModal(true)}
+              >
+                Sign In
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
 
 
       {/* Stats Section */}
@@ -267,172 +274,212 @@ useEffect(() => {
         </div>
       </section>
 
-      {/* Top Tutors Section */}
-<section className="py-12 sm:py-16 lg:py-20 bg-white">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div className="text-center mb-10">
-      <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Meet Our Top Tutors</h2>
-      <p className="text-blue-gray text-base sm:text-lg">
-        Explore a few of our expert tutors—more waiting inside!
-      </p>
-    </div>
+      {/* Features Section */}
+            <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-12 lg:mb-16">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Why Choose Tutortots</h2>
+                  <p className="text-lg sm:text-xl text-blue-gray max-w-2xl mx-auto">
+                    Everything you need for academic success in one platform
+                  </p>
+                </div>         
+      
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                  
+                  <div className="group [perspective:1000px]">
+                    <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                      {/* Front face with dimmed image, orange icon, white title */}
+                      <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                        {/* Background image + dim overlay */}
+                        <div
+                          className="absolute inset-0 bg-cover bg-center scale-105"
+                          style={{ backgroundImage: `url("/images/feature1.jpg")` }}
+                        />
+                        <div className="absolute inset-0 bg-black/60" />
+                        {/* Icon and Title */}
+                        <div className="relative z-10 flex flex-col items-center">
+                          <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                            <GraduationCap className="h-8 w-8 text-white" />
+                            </div> 
+                            <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                            Expert Tutors
+                          </h3>
+                        </div>
+                      </div>
+                      {/* Back face with description */}
+                      <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                        Connect with verified tutors from various subjects and academic levels
+                      </div>
+                    </div>
+                  </div>
+      
+                  <div className="group [perspective:1000px]">
+                    <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                      {/* Front face with dimmed image, orange icon, white title */}
+                      <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                        {/* Background image + dim overlay */}
+                        <div
+                          className="absolute inset-0 bg-cover bg-center scale-105"
+                          style={{ backgroundImage: `url("/images/feature2.jpg")` }}
+                        />
+                        <div className="absolute inset-0 bg-black/60" />
+                        {/* Icon and Title */}
+                        <div className="relative z-10 flex flex-col items-center">
+                          <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                            <Calendar className="h-8 w-8 text-white" />
+                            </div> 
+                            <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                            Flexible Scheduling
+                          </h3>
+                        </div>
+                      </div>
+                      {/* Back face with description */}
+                      <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                        Book sessions that fit your schedule with easy calendar integration
+                      </div>
+                    </div>
+                  </div>
+      
+                  <div className="group [perspective:1000px]">
+                    <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                      {/* Front face with dimmed image, orange icon, white title */}
+                      <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                        {/* Background image + dim overlay */}
+                        <div
+                          className="absolute inset-0 bg-cover bg-center scale-105"
+                          style={{ backgroundImage: `url("/images/feature3.jpg")` }}
+                        />
+                        <div className="absolute inset-0 bg-black/60" />
+                        {/* Icon and Title */}
+                        <div className="relative z-10 flex flex-col items-center">
+                          <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                            <Users className="h-8 w-8 text-white" />
+                            </div> 
+                            <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                            Peer Learning
+                          </h3>
+                        </div>
+                      </div>
+                      {/* Back face with description */}
+                      <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                        Learn from fellow students who excel in their subjects
+                      </div>
+                    </div>
+                  </div>
+      
+                  <div className="group [perspective:1000px]">
+                    <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
+                      {/* Front face with dimmed image, orange icon, white title */}
+                      <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
+                        {/* Background image + dim overlay */}
+                        <div
+                          className="absolute inset-0 bg-cover bg-center scale-105"
+                          style={{ backgroundImage: `url("/images/feature4.jpg")` }}
+                        />
+                        <div className="absolute inset-0 bg-black/60" />
+                        {/* Icon and Title */}
+                        <div className="relative z-10 flex flex-col items-center">
+                          <div className="mx-auto rounded-lg mb-2 items-center justify-center">
+                            <Star className="h-8 w-8 text-white" />
+                            </div> 
+                            <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
+                            Quality Assured
+                          </h3>
+                        </div>
+                      </div>
+                      {/* Back face with description */}
+                      <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
+                        Rate and review tutors to ensure high-quality learning experiences
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {topTutors.map((tutor) => (
-        <div
-          key={tutor.id}
-          onClick={() => setShowLoginModal(true)}
-          className="cursor-pointer group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow hover:shadow-lg transition"
-        >
-          <img
-            src={tutor.avatar_url || "/images/default-avatar.png"}
-            alt={tutor.full_name}
-            className="w-full h-48 object-cover"
-          />
-          <div className="p-4">
-            <h3 className="text-lg font-semibold text-dark-blue-gray">{tutor.full_name}</h3>
-            <p className="text-sm text-blue-gray">{tutor.course}</p>
-            <div className="flex items-center mt-2 text-orange text-sm">
-              <Star className="w-4 h-4 mr-1" />
-              {tutor.rating.toFixed(1)} / 5
-            </div>
+      {/* Top Tutors Section */}
+      <section id="top-tutors" className="py-12 sm:py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Meet Our Top Tutors</h2>
+            <p className="text-blue-gray text-base sm:text-lg">
+              Explore a few of our expert tutors—more waiting inside!
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {topTutors.map((tutor) => (
+              <div
+                key={tutor.id}
+                onClick={() => setShowLoginModal(true)}
+                className="cursor-pointer group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow hover:shadow-lg transition"
+              >
+                <img
+                  src={tutor.avatar_url || "/images/default-avatar.png"}
+                  alt={tutor.full_name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-dark-blue-gray">{tutor.full_name}</h3>
+                  <p className="text-sm text-blue-gray">{tutor.course}</p>
+                  <div className="flex items-center mt-2 text-orange text-sm">
+                    <Star className="w-4 h-4 mr-1" />
+                    {tutor.rating.toFixed(1)} / 5
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Button
+              className="px-6 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
+              onClick={() => setShowLoginModal(true)}
+            >
+              View More Tutors
+              <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
           </div>
         </div>
-      ))}
-    </div>
+      </section>
 
-    <div className="text-center mt-10">
-      <Button
-        className="px-6 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
-        onClick={() => setShowLoginModal(true)}
-      >
-        View More Tutors
-        <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-      </Button>
-    </div>
-  </div>
-</section>
-
-
-      {/* Features Section */}
-      <section id="features" className="py-12 sm:py-16 lg:py-20 bg-gray-50">
+      {/* How It Works */}
+      <section id="how-to-start" className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold text-dark-blue-gray mb-4">Why Choose Tutortots</h2>
-            <p className="text-lg sm:text-xl text-blue-gray max-w-2xl mx-auto">
-              Everything you need for academic success in one platform
-            </p>
-          </div>         
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            
-            <div className="group [perspective:1000px]">
-              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                {/* Front face with dimmed image, orange icon, white title */}
-                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  {/* Background image + dim overlay */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center scale-105"
-                    style={{ backgroundImage: `url("/images/feature1.jpg")` }}
-                  />
-                  <div className="absolute inset-0 bg-black/60" />
-                  {/* Icon and Title */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
-                      <GraduationCap className="h-8 w-8 text-white" />
-                      </div> 
-                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
-                      Expert Tutors
-                    </h3>
-                  </div>
-                </div>
-                {/* Back face with description */}
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                  Connect with verified tutors from various subjects and academic levels
-                </div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">How Tutortots Works</h2>
+            <p className="text-lg text-gray-600">Simple steps to connect with the perfect tutor</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="p-8 text-center hover:shadow-lg transition-shadow">
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Users className="h-8 w-8 text-blue-600" />
               </div>
-            </div>
-
-            <div className="group [perspective:1000px]">
-              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                {/* Front face with dimmed image, orange icon, white title */}
-                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  {/* Background image + dim overlay */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center scale-105"
-                    style={{ backgroundImage: `url("/images/feature2.jpg")` }}
-                  />
-                  <div className="absolute inset-0 bg-black/60" />
-                  {/* Icon and Title */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
-                      <Calendar className="h-8 w-8 text-white" />
-                      </div> 
-                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
-                      Flexible Scheduling
-                    </h3>
-                  </div>
-                </div>
-                {/* Back face with description */}
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                  Book sessions that fit your schedule with easy calendar integration
-                </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">1. Create Account</h3>
+              <p className="text-gray-600">
+                Register as a student or tutor with your Sunway University email. All accounts are verified for
+                security.
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-lg transition-shadow">
+              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <BookOpen className="h-8 w-8 text-green-600" />
               </div>
-            </div>
-
-            <div className="group [perspective:1000px]">
-              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                {/* Front face with dimmed image, orange icon, white title */}
-                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  {/* Background image + dim overlay */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center scale-105"
-                    style={{ backgroundImage: `url("/images/feature3.jpg")` }}
-                  />
-                  <div className="absolute inset-0 bg-black/60" />
-                  {/* Icon and Title */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
-                      <Users className="h-8 w-8 text-white" />
-                      </div> 
-                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
-                      Peer Learning
-                    </h3>
-                  </div>
-                </div>
-                {/* Back face with description */}
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                  Learn from fellow students who excel in their subjects
-                </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">2. Find Your Match</h3>
+              <p className="text-gray-600">
+                Browse qualified tutors by subject, rating, and availability. View profiles and read reviews from other
+                students.
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-lg transition-shadow">
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Calendar className="h-8 w-8 text-purple-600" />
               </div>
-            </div>
-
-            <div className="group [perspective:1000px]">
-              <div className="relative h-64 w-full transition-transform duration-500 [transform-style:preserve-3d] group-hover:[transform:rotateY(180deg)]">
-                {/* Front face with dimmed image, orange icon, white title */}
-                <div className="absolute inset-0 rounded-xl shadow-md overflow-hidden flex flex-col items-center justify-center [backface-visibility:hidden]">
-                  {/* Background image + dim overlay */}
-                  <div
-                    className="absolute inset-0 bg-cover bg-center scale-105"
-                    style={{ backgroundImage: `url("/images/feature4.jpg")` }}
-                  />
-                  <div className="absolute inset-0 bg-black/60" />
-                  {/* Icon and Title */}
-                  <div className="relative z-10 flex flex-col items-center">
-                    <div className="mx-auto rounded-lg mb-2 items-center justify-center">
-                      <Star className="h-8 w-8 text-white" />
-                      </div> 
-                      <h3 className="text-white text-xl sm:text-2xl font-semibold text-center">
-                      Quality Assured
-                    </h3>
-                  </div>
-                </div>
-                {/* Back face with description */}
-                <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                  Rate and review tutors to ensure high-quality learning experiences
-                </div>
-              </div>
-            </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Book & Learn</h3>
+              <p className="text-gray-600">
+                Schedule sessions at your convenience. Join online sessions and track your progress with built-in tools.
+              </p>
+            </Card>
           </div>
         </div>
       </section>
