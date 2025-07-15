@@ -81,6 +81,7 @@ interface Reward {
   image_size?: number
   created_at: string
   updated_at: string
+  expiry_days?: number // <-- add expiry_days
 }
 
 export default function AdminDashboard() {
@@ -106,6 +107,7 @@ export default function AdminDashboard() {
     category: "",
     terms_conditions: "",
     stock_quantity: "",
+    expiry_days: "", // <-- add expiry_days
   })
 
   useEffect(() => {
@@ -365,6 +367,7 @@ export default function AdminDashboard() {
       category: "",
       terms_conditions: "",
       stock_quantity: "",
+      expiry_days: "", // <-- add expiry_days
     })
     setSelectedImage(null)
     setPreviewUrl("")
@@ -382,6 +385,7 @@ export default function AdminDashboard() {
       category: reward.category,
       terms_conditions: reward.terms_conditions,
       stock_quantity: reward.stock_quantity.toString(),
+      expiry_days: reward.expiry_days ? reward.expiry_days.toString() : "", // <-- add expiry_days
     })
     setPreviewUrl(reward.image_url || "")
     setSelectedImage(null)
@@ -451,6 +455,7 @@ export default function AdminDashboard() {
         category: rewardForm.category,
         terms_conditions: rewardForm.terms_conditions,
         stock_quantity: stockQty,
+        expiry_days: rewardForm.expiry_days ? Number.parseInt(rewardForm.expiry_days) : null, // <-- add expiry_days
         ...imageData,
       }
 
@@ -958,6 +963,18 @@ export default function AdminDashboard() {
                               placeholder="-1 for unlimited"
                             />
                           </div>
+                        </div>
+                        {/* Expiry Days Field */}
+                        <div className="space-y-2">
+                          <Label htmlFor="expiry_days">Voucher Expiry (days)</Label>
+                          <Input
+                            id="expiry_days"
+                            type="number"
+                            min="1"
+                            value={rewardForm.expiry_days}
+                            onChange={(e) => setRewardForm({ ...rewardForm, expiry_days: e.target.value })}
+                            placeholder="e.g. 90"
+                          />
                         </div>
 
                         <div className="space-y-2">

@@ -75,6 +75,9 @@ export default function TutorRewards() {
   const [showRedeemDialog, setShowRedeemDialog] = useState(false)
   const [loading, setLoading] = useState(true)
   const [redeeming, setRedeeming] = useState(false)
+  const [showUseDialog, setShowUseDialog] = useState(false)
+  const [selectedRedemption, setSelectedRedemption] = useState<Redemption | null>(null)
+  const [usingVoucher, setUsingVoucher] = useState(false)
 
   useEffect(() => {
     if (!user || user.role !== "tutor") {
@@ -200,6 +203,40 @@ export default function TutorRewards() {
     }
   }
 
+  const handleUseVoucher = async () => {
+    if (!selectedRedemption) return
+    setUsingVoucher(true)
+    try {
+      const { error } = await supabase
+        .from("rewards_redemptions")
+        .update({ status: "used", used_at: new Date().toISOString() })
+        .eq("id", selectedRedemption.id)
+      if (error) {
+        toast({
+          title: "Failed to use voucher",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
+      }
+      toast({
+        title: "Voucher Used",
+        description: "Voucher has been marked as used.",
+      })
+      setShowUseDialog(false)
+      setSelectedRedemption(null)
+      fetchData()
+    } catch (error) {
+      toast({
+        title: "Failed to use voucher",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setUsingVoucher(false)
+    }
+  }
+
   const filteredRewards = rewards.filter((reward) => selectedCategory === "all" || reward.category === selectedCategory)
 
   const categories = ["all", ...Array.from(new Set(rewards.map((r) => r.category)))]
@@ -213,6 +250,16 @@ export default function TutorRewards() {
   }
 
   if (!user) return null
+
+  // Split redemptions by status and expiry
+  const now = new Date()
+  const activeVouchers = redemptions.filter(
+    (r) => r.status === "active" && new Date(r.expires_at) >= now
+  )
+  const usedVouchers = redemptions.filter((r) => r.status === "used")
+  const expiredVouchers = redemptions.filter(
+    (r) => r.status === "expired" || (r.status === "active" && new Date(r.expires_at) < now)
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -360,47 +407,166 @@ export default function TutorRewards() {
           </TabsContent>
 
           <TabsContent value="vouchers">
-            <div className="space-y-4">
-              {redemptions.length === 0 ? (
-                <Card className="border-gray-200 shadow-sm">
-                  <CardContent className="text-center py-12">
-                    <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-dark-blue-gray mb-2">No vouchers yet</h3>
-                    <p className="text-blue-gray">Redeem rewards to get your first voucher!</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                redemptions.map((redemption) => (
-                  <Card key={redemption.id} className="border-gray-200 shadow-sm">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-dark-blue-gray">{redemption.reward.title}</h3>
-                          <p className="text-sm text-blue-gray">
-                            {redemption.reward.brand} • RM{redemption.reward.value_rm}
-                          </p>
-                          <div className="mt-2 flex items-center gap-4">
-                            <div className="bg-gray-100 px-3 py-1 rounded font-mono text-sm">
-                              {redemption.voucher_code}
-                            </div>
-                            <Badge
-                              variant={redemption.status === "active" ? "default" : "secondary"}
-                              className={redemption.status === "active" ? "bg-green-100 text-green-600" : ""}
-                            >
-                              {redemption.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="text-right text-sm text-blue-gray">
-                          <div>Expires: {formatDate(redemption.expires_at)}</div>
-                          <div>Redeemed: {formatDate(redemption.redeemed_at)}</div>
-                        </div>
-                      </div>
+            <div className="space-y-8">
+              {/* Active Vouchers */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Active Vouchers</h2>
+                {activeVouchers.length === 0 ? (
+                  <Card className="border-gray-200 shadow-sm">
+                    <CardContent className="text-center py-12">
+                      <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-dark-blue-gray mb-2">No active vouchers</h3>
+                      <p className="text-blue-gray">Redeem rewards to get your first voucher!</p>
                     </CardContent>
                   </Card>
-                ))
-              )}
+                ) : (
+                  activeVouchers.map((redemption) => (
+                    <Card key={redemption.id} className="border-gray-200 shadow-sm mb-4">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-dark-blue-gray">{redemption.reward.title}</h3>
+                            <p className="text-sm text-blue-gray">
+                              {redemption.reward.brand} • RM{redemption.reward.value_rm}
+                            </p>
+                            <div className="mt-2 flex items-center gap-4">
+                              <div className="bg-gray-100 px-3 py-1 rounded font-mono text-sm">
+                                {redemption.voucher_code}
+                              </div>
+                              <Badge variant="default" className="bg-green-100 text-green-600">
+                                Active
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <div>Expires: {formatDate(redemption.expires_at)}</div>
+                            <Button
+                              size="sm"
+                              className="bg-orange text-white"
+                              onClick={() => {
+                                setSelectedRedemption(redemption)
+                                setShowUseDialog(true)
+                              }}
+                            >
+                              Use Voucher
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+              {/* Used Vouchers */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Used Vouchers</h2>
+                {usedVouchers.length === 0 ? (
+                  <Card className="border-gray-200 shadow-sm">
+                    <CardContent className="text-center py-8">
+                      <p className="text-blue-gray">No used vouchers</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  usedVouchers.map((redemption) => (
+                    <Card key={redemption.id} className="border-gray-200 shadow-sm mb-4">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-dark-blue-gray">{redemption.reward.title}</h3>
+                            <p className="text-sm text-blue-gray">
+                              {redemption.reward.brand} • RM{redemption.reward.value_rm}
+                            </p>
+                            <div className="mt-2 flex items-center gap-4">
+                              <div className="bg-gray-100 px-3 py-1 rounded font-mono text-sm">
+                                {redemption.voucher_code}
+                              </div>
+                              <Badge variant="secondary">Used</Badge>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <div>Used</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+              {/* Expired Vouchers */}
+              <div>
+                <h2 className="text-lg font-semibold mb-2">Expired Vouchers</h2>
+                {expiredVouchers.length === 0 ? (
+                  <Card className="border-gray-200 shadow-sm">
+                    <CardContent className="text-center py-8">
+                      <p className="text-blue-gray">No expired vouchers</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  expiredVouchers.map((redemption) => (
+                    <Card key={redemption.id} className="border-gray-200 shadow-sm mb-4">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-dark-blue-gray">{redemption.reward.title}</h3>
+                            <p className="text-sm text-blue-gray">
+                              {redemption.reward.brand} • RM{redemption.reward.value_rm}
+                            </p>
+                            <div className="mt-2 flex items-center gap-4">
+                              <div className="bg-gray-100 px-3 py-1 rounded font-mono text-sm">
+                                {redemption.voucher_code}
+                              </div>
+                              <Badge variant="secondary">Expired</Badge>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <div>Expired: {formatDate(redemption.expires_at)}</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
             </div>
+            {/* Use Voucher Confirmation Dialog */}
+            <Dialog open={showUseDialog} onOpenChange={setShowUseDialog}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Use Voucher</DialogTitle>
+                  <DialogDescription>Are you sure you want to use this voucher? This action cannot be undone.</DialogDescription>
+                </DialogHeader>
+                {selectedRedemption && (
+                  <div className="space-y-4">
+                    <div className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-dark-blue-gray">{selectedRedemption.reward.title}</h3>
+                      <p className="text-sm text-blue-gray">
+                        {selectedRedemption.reward.brand} • RM{selectedRedemption.reward.value_rm}
+                      </p>
+                      <div className="mt-2 flex items-center gap-1">
+                        <span className="font-medium">Voucher Code: {selectedRedemption.voucher_code}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                        onClick={() => setShowUseDialog(false)}
+                        disabled={usingVoucher}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className="flex-1 bg-orange hover:bg-orange text-white"
+                        onClick={handleUseVoucher}
+                        disabled={usingVoucher}
+                      >
+                        {usingVoucher ? "Processing..." : "Confirm Use"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="history">
