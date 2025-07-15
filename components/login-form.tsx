@@ -16,7 +16,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
-  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -29,6 +29,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     setError("")
     setIsLoading(true)
 
+    const email = `${username}@imail.sunway.edu.my`
     try {
       const success = await login(email, password)
       if (success) {
@@ -50,20 +51,24 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-dark-blue-gray font-medium">
+            <Label htmlFor="username" className="text-dark-blue-gray font-medium">
               Email
             </Label>
-            <div className="relative">
+            <div className="relative flex items-center">
               <Mail className="absolute left-3 top-3 h-4 w-4 text-blue-gray" />
               <Input
-                id="email"
-                type="email"
-                placeholder="your.email@imail.sunway.edu.my"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 border-gray-300 focus:border-orange focus:ring-orange"
+                id="username"
+                type="text"
+                placeholder="your.email"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="pl-10 border-gray-300 focus:border-orange focus:ring-orange pr-36"
                 required
+                autoComplete="username"
               />
+              <span className="absolute right-4 text-blue-gray select-none pointer-events-none">
+                @imail.sunway.edu.my
+              </span>
             </div>
           </div>
 
