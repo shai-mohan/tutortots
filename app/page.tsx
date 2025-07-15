@@ -532,23 +532,18 @@ useEffect(() => {
               <h3 className="font-semibold mb-4">Platform</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
                 <li>
-                  <Link href="/register" className="hover:text-orange transition-colors">
-                    Register
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/" className="hover:text-orange transition-colors">
-                    Login
-                  </Link>
-                </li>
-                <li>
                   <Link href="#features" className="hover:text-orange transition-colors">
-                    Features
+                    Why Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="hover:text-orange transition-colors">
-                    About
+                  <Link href="#top-tutors" className="hover:text-orange transition-colors">
+                    Top Tutors
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#how-to-start" className="hover:text-orange transition-colors">
+                    How to Start
                   </Link>
                 </li>
               </ul>
@@ -556,11 +551,6 @@ useEffect(() => {
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Help Center
-                  </a>
-                </li>
                 <li>
                   <a href="#" className="hover:text-orange transition-colors">
                     Contact Us
@@ -577,18 +567,13 @@ useEffect(() => {
               <h3 className="font-semibold mb-4">University</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
                 <li>
-                  <a href="#" className="hover:text-orange transition-colors">
+                  <a href=" https://www.sunwayuniversity.edu.my/" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors">
                     Sunway University
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Academic Calendar
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Student Portal
+                  <a href="https://elearn.sunway.edu.my/" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors">
+                    eLearn - Student Portal
                   </a>
                 </li>
               </ul>
