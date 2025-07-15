@@ -398,6 +398,25 @@ export default function AdminDashboard() {
         return
       }
 
+      // Stock quantity validation
+      const stockQty = Number.parseInt(rewardForm.stock_quantity)
+      if (isNaN(stockQty)) {
+        toast({
+          title: "Invalid Stock Quantity",
+          description: "Stock quantity must be a number (-1 for unlimited, 0 for out of stock, or a positive integer)",
+          variant: "destructive",
+        })
+        return
+      }
+      if (stockQty < -1) {
+        toast({
+          title: "Invalid Stock Quantity",
+          description: "Stock quantity cannot be less than -1.",
+          variant: "destructive",
+        })
+        return
+      }
+
       let imageData = {}
 
       if (selectedImage) {
@@ -431,7 +450,7 @@ export default function AdminDashboard() {
         points_required: Number.parseInt(rewardForm.points_required),
         category: rewardForm.category,
         terms_conditions: rewardForm.terms_conditions,
-        stock_quantity: Number.parseInt(rewardForm.stock_quantity) || -1,
+        stock_quantity: stockQty,
         ...imageData,
       }
 

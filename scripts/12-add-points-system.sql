@@ -205,6 +205,7 @@ DECLARE
   voucher_code TEXT;
   redemption_id UUID;
   result JSON;
+  expiry_days INTEGER;
 BEGIN
   -- Get reward details
   SELECT * INTO reward_record 
@@ -214,25 +215,31 @@ BEGIN
   IF NOT FOUND THEN
     RETURN json_build_object('success', false, 'message', 'Reward not found or inactive');
   END IF;
-  
+
   -- Check stock
   IF reward_record.stock_quantity = 0 THEN
     RETURN json_build_object('success', false, 'message', 'Reward out of stock');
   END IF;
-  
+
   -- Get user points
   SELECT points INTO user_points 
   FROM profiles 
   WHERE id = user_uuid;
-  
+
   -- Check if user has enough points
   IF user_points < reward_record.points_required THEN
     RETURN json_build_object('success', false, 'message', 'Insufficient points');
   END IF;
-  
+
   -- Generate voucher code
   voucher_code := generate_voucher_code();
-  
+
+  -- Determine expiry_days (default to 90 if null or < 1)
+  expiry_days := COALESCE(reward_record.expiry_days, 90);
+  IF expiry_days < 1 THEN
+    expiry_days := 90;
+  END IF;
+
   -- Create redemption record
   INSERT INTO rewards_redemptions (
     user_id,
@@ -245,14 +252,14 @@ BEGIN
     reward_uuid,
     reward_record.points_required,
     voucher_code,
-    NOW() + INTERVAL '90 days' -- Vouchers expire in 90 days
+    NOW() + (expiry_days || ' days')::INTERVAL
   ) RETURNING id INTO redemption_id;
-  
+
   -- Deduct points from user
   UPDATE profiles 
   SET points = points - reward_record.points_required 
   WHERE id = user_uuid;
-  
+
   -- Record transaction
   INSERT INTO points_transactions (
     user_id,
@@ -269,25 +276,39 @@ BEGIN
     redemption_id,
     'Redeemed: ' || reward_record.title
   );
-  
+
   -- Update stock if not unlimited
   IF reward_record.stock_quantity > 0 THEN
     UPDATE rewards 
     SET stock_quantity = stock_quantity - 1 
     WHERE id = reward_uuid;
   END IF;
-  
+
   -- Return success with voucher code
   result := json_build_object(
     'success', true,
     'voucher_code', voucher_code,
-    'expires_at', (NOW() + INTERVAL '90 days')::text,
+    'expires_at', (NOW() + (expiry_days || ' days')::INTERVAL)::text,
     'reward_title', reward_record.title
   );
-  
+
   RETURN result;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Function to expire vouchers whose expiry date has passed
+CREATE OR REPLACE FUNCTION expire_expired_vouchers()
+RETURNS void AS $$
+BEGIN
+  UPDATE rewards_redemptions
+  SET status = 'expired'
+  WHERE status = 'active' AND expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- To schedule this function, use a job scheduler like pg_cron or Supabase scheduled functions.
+-- Example (for pg_cron):
+-- SELECT cron.schedule('Expire Vouchers', '0 0 * * *', $$SELECT expire_expired_vouchers();$$);
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_rewards_updated_at()
@@ -303,3 +324,5 @@ CREATE TRIGGER update_rewards_updated_at
   BEFORE UPDATE ON rewards
   FOR EACH ROW
   EXECUTE FUNCTION update_rewards_updated_at();
+
+ALTER TABLE rewards ADD COLUMN IF NOT EXISTS expiry_days INTEGER DEFAULT 90;
