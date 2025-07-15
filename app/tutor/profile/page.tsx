@@ -30,7 +30,7 @@ export default function TutorProfile() {
 
   // Add this state for feedback stats
   const [feedbackStats, setFeedbackStats] = useState({
-    averageRating: 0,
+    sentimentRating: 0,
     totalRatings: 0,
   })
 
@@ -41,36 +41,27 @@ export default function TutorProfile() {
       return
     }
 
-    // Fetch real feedback statistics
-    const fetchFeedbackStats = async () => {
+    // Fetch sentiment rating and total ratings from the tutor's profile
+    const fetchProfileStats = async () => {
       try {
-        const { data: feedbackData, error } = await supabase
-          .from("feedback")
-          .select(`
-          rating,
-          sessions!inner (
-            tutor_id
-          )
-        `)
-          .eq("sessions.tutor_id", user.id)
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("sentiment_rating, sentiment_total_ratings")
+          .eq("id", user.id)
+          .single()
 
-        if (!error && feedbackData) {
-          const ratingsOnly = feedbackData.filter((f) => f.rating !== null).map((f) => f.rating!)
-          const totalRatings = ratingsOnly.length
-          const averageRating =
-            totalRatings > 0 ? ratingsOnly.reduce((sum, rating) => sum + rating, 0) / totalRatings : 0
-
+        if (!error && data) {
           setFeedbackStats({
-            averageRating,
-            totalRatings,
+            sentimentRating: data.sentiment_rating ?? 0,
+            totalRatings: data.sentiment_total_ratings ?? 0,
           })
         }
       } catch (error) {
-        console.error("Error fetching feedback stats:", error)
+        console.error("Error fetching profile stats:", error)
       }
     }
 
-    fetchFeedbackStats()
+    fetchProfileStats()
 
     setFormData({
       name: user.name,
@@ -195,13 +186,13 @@ export default function TutorProfile() {
             </CardHeader>
             <CardContent>
               <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-yellow-600">{feedbackStats.averageRating.toFixed(1)}</div>
+                <div className="text-3xl font-bold text-yellow-600">{feedbackStats.sentimentRating.toFixed(1)}</div>
                 <div className="flex justify-center">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.floor(feedbackStats.averageRating)
+                        i < Math.floor(feedbackStats.sentimentRating)
                           ? "fill-yellow-400 text-yellow-400"
                           : "text-gray-300"
                       }`}
