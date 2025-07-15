@@ -147,32 +147,59 @@ export default function StudentDashboard() {
           setFilteredTutors(formattedTutors)
         }
 
-        // Fetch recent sessions (mock data for now)
-        setRecentSessions([
-          {
-            id: "1",
-            tutorName: "Dr. Sarah Chen",
-            subject: "Mathematics",
-            date: "2024-01-15",
-            status: "completed",
-            rating: 5,
-          },
-          {
-            id: "2",
-            tutorName: "Prof. Ahmad Rahman",
-            subject: "Physics",
-            date: "2024-01-20",
-            status: "upcoming",
-          },
-          {
-            id: "3",
-            tutorName: "Ms. Lisa Wong",
-            subject: "Chemistry",
-            date: "2024-01-10",
-            status: "completed",
-            rating: 4,
-          },
-        ])
+        // Fetch recent sessions (real data)
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("sessions")
+          .select("id, tutor_id, subject, date, status")
+          .eq("student_id", user.id)
+          .order("date", { ascending: false })
+          .limit(5)
+
+        if (sessionError) {
+          console.error("Error fetching recent sessions:", sessionError)
+          setRecentSessions([])
+        } else if (sessionData.length === 0) {
+          setRecentSessions([])
+        } else {
+          // Fetch tutors for these sessions
+          const tutorIds = [...new Set(sessionData.map((s) => s.tutor_id))]
+          const { data: tutorData, error: tutorError } = await supabase
+            .from("profiles")
+            .select("id, name")
+            .in("id", tutorIds)
+
+          const tutorMap = (tutorData || []).reduce((acc, t) => {
+            acc[t.id] = t.name
+            return acc
+          }, {} as Record<string, string>)
+
+          // Fetch feedback for these sessions
+          const { data: feedbackData, error: feedbackError } = await supabase
+            .from("feedback")
+            .select("session_id, rating")
+            .in("session_id", sessionData.map((s) => s.id))
+
+          const feedbackMap = (feedbackData || []).reduce((acc, f) => {
+            acc[f.session_id] = f.rating
+            return acc
+          }, {} as Record<string, number | undefined>)
+
+          // Map sessions to UI format
+          const formattedSessions = sessionData.map((s) => ({
+            id: s.id,
+            tutorName: tutorMap[s.tutor_id] || "Unknown Tutor",
+            subject: s.subject,
+            date: s.date,
+            status:
+              s.status === "scheduled"
+                ? "upcoming"
+                : s.status === "completed"
+                ? "completed"
+                : "cancelled",
+            rating: feedbackMap[s.id],
+          }))
+          setRecentSessions(formattedSessions)
+        }
 
         // Set quick stats
         setQuickStats({
