@@ -50,6 +50,14 @@ import {
   ImageIcon,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination"
 
 interface User {
   id: string
@@ -96,6 +104,7 @@ export default function AdminDashboard() {
   const [editingReward, setEditingReward] = useState<Reward | null>(null)
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string>("")
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Form state for reward
   const [rewardForm, setRewardForm] = useState({
@@ -109,6 +118,17 @@ export default function AdminDashboard() {
     stock_quantity: "",
     expiry_days: "", // <-- add expiry_days
   })
+
+  // Pagination state for tutors and students
+  const USERS_PER_PAGE = 5;
+  const [tutorPage, setTutorPage] = useState(1);
+  const [studentPage, setStudentPage] = useState(1);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setTutorPage(1);
+    setStudentPage(1);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
@@ -385,7 +405,7 @@ export default function AdminDashboard() {
       category: reward.category,
       terms_conditions: reward.terms_conditions,
       stock_quantity: reward.stock_quantity.toString(),
-      expiry_days: reward.expiry_days ? reward.expiry_days.toString() : "", // <-- add expiry_days
+      expiry_days: rewardForm.expiry_days ? rewardForm.expiry_days.toString() : "", // <-- add expiry_days
     })
     setPreviewUrl(reward.image_url || "")
     setSelectedImage(null)
@@ -529,6 +549,22 @@ export default function AdminDashboard() {
 
   const pendingUsers = users.filter((u) => !u.verified && u.role !== "admin")
   const verifiedUsers = users.filter((u) => u.verified && u.role !== "admin")
+
+  // Filtered lists
+  const tutors = verifiedUsers.filter(u => u.role === "tutor" && (
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  ));
+  const students = verifiedUsers.filter(u => u.role === "student" && (
+    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  ));
+
+  // Pagination calculations
+  const tutorPageCount = Math.ceil(tutors.length / USERS_PER_PAGE);
+  const studentPageCount = Math.ceil(students.length / USERS_PER_PAGE);
+  const paginatedTutors = tutors.slice((tutorPage - 1) * USERS_PER_PAGE, tutorPage * USERS_PER_PAGE);
+  const paginatedStudents = students.slice((studentPage - 1) * USERS_PER_PAGE, studentPage * USERS_PER_PAGE);
 
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -752,119 +788,279 @@ export default function AdminDashboard() {
                 <CardDescription className="text-blue-gray">All verified users in the system</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <Input
+                    type="text"
+                    placeholder="Search by name or email..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="max-w-xs"
+                  />
+                </div>
                 {verifiedUsers.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-blue-gray">No verified users</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {verifiedUsers.map((verifiedUser) => (
-                      <div
-                        key={verifiedUser.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
-                      >
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-orange text-white">
-                              {verifiedUser.name.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-medium text-dark-blue-gray">{verifiedUser.name}</h3>
-                            <p className="text-sm text-blue-gray">{verifiedUser.email}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <Badge
-                                variant={verifiedUser.role === "student" ? "default" : "secondary"}
-                                className="bg-gray-100 text-blue-gray"
+                  <div className="space-y-8">
+                    {/* Tutors Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-dark-blue-gray mb-2">Verified Tutors</h3>
+                      {tutors.length === 0 ? (
+                        <div className="text-blue-gray text-sm mb-4">No verified tutors</div>
+                      ) : (
+                        <>
+                          <div className="space-y-4">
+                            {paginatedTutors.map((verifiedUser) => (
+                              <div
+                                key={verifiedUser.id}
+                                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
                               >
-                                {verifiedUser.role}
-                              </Badge>
-                              <Badge variant="outline" className="text-green-600 border-green-200">
-                                Verified
-                              </Badge>
-                              {verifiedUser.role === "student" && verifiedUser.academicYear && (
-                                <Badge variant="outline" className="border-gray-300 text-blue-gray">
-                                  {verifiedUser.academicYear}
-                                </Badge>
-                              )}
-                            </div>
-                            {verifiedUser.role === "tutor" && verifiedUser.subjects && (
-                              <div className="mt-2">
-                                <p className="text-xs text-blue-gray mb-1">Subjects:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {verifiedUser.subjects.map((subject) => (
-                                    <Badge
-                                      key={subject}
-                                      variant="outline"
-                                      className="text-xs border-gray-300 text-blue-gray"
-                                    >
-                                      {subject}
-                                    </Badge>
-                                  ))}
+                                <div className="flex items-center gap-4">
+                                  <Avatar className="h-12 w-12">
+                                    <AvatarFallback className="bg-orange text-white">
+                                      {verifiedUser.name.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <h3 className="font-medium text-dark-blue-gray">{verifiedUser.name}</h3>
+                                    <p className="text-sm text-blue-gray">{verifiedUser.email}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <Badge
+                                        variant={verifiedUser.role === "student" ? "default" : "secondary"}
+                                        className="bg-gray-100 text-blue-gray"
+                                      >
+                                        {verifiedUser.role}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-green-600 border-green-200">
+                                        Verified
+                                      </Badge>
+                                    </div>
+                                    {verifiedUser.subjects && (
+                                      <div className="mt-2">
+                                        <p className="text-xs text-blue-gray mb-1">Subjects:</p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {verifiedUser.subjects.map((subject) => (
+                                            <Badge
+                                              key={subject}
+                                              variant="outline"
+                                              className="text-xs border-gray-300 text-blue-gray"
+                                            >
+                                              {subject}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {verifiedUser.qualificationDocumentUrl && (
+                                      <div className="mt-2">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            viewDocument(
+                                              verifiedUser.qualificationDocumentUrl!,
+                                              verifiedUser.qualificationDocumentName || "Document",
+                                              verifiedUser.qualificationDocumentType || "",
+                                            )
+                                          }
+                                          className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto"
+                                        >
+                                          <Eye className="h-3 w-3 mr-1" />
+                                          View Qualification
+                                          <ExternalLink className="h-3 w-3 ml-1" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => unverifyUser(verifiedUser.id)}
+                                    className="text-xs text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Unverify
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="text-xs"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Delete
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete this user? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => rejectUser(verifiedUser.id)}>Delete</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
                                 </div>
                               </div>
-                            )}
-
-                            {verifiedUser.role === "tutor" && verifiedUser.qualificationDocumentUrl && (
-                              <div className="mt-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() =>
-                                    viewDocument(
-                                      verifiedUser.qualificationDocumentUrl!,
-                                      verifiedUser.qualificationDocumentName || "Document",
-                                      verifiedUser.qualificationDocumentType || "",
-                                    )
-                                  }
-                                  className="text-xs text-blue-600 hover:text-blue-700 p-0 h-auto"
-                                >
-                                  <Eye className="h-3 w-3 mr-1" />
-                                  View Qualification
-                                  <ExternalLink className="h-3 w-3 ml-1" />
-                                </Button>
-                              </div>
-                            )}
-                            <div className="mt-3 flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => unverifyUser(verifiedUser.id)}
-                                className="text-xs text-yellow-700 border-yellow-300 hover:bg-yellow-50"
-                              >
-                                <XCircle className="w-4 h-4 mr-1" />
-                                Unverify
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    className="text-xs"
-                                  >
-                                    <Trash2 className="w-4 h-4 mr-1" />
-                                    Delete
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete this user? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => rejectUser(verifiedUser.id)}>Delete</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-
+                            ))}
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                          {tutorPageCount > 1 && (
+                            <Pagination className="mt-4">
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious
+                                    href="#"
+                                    onClick={e => { e.preventDefault(); setTutorPage(p => Math.max(1, p - 1)); }}
+                                    aria-disabled={tutorPage === 1}
+                                  />
+                                </PaginationItem>
+                                {[...Array(tutorPageCount)].map((_, i) => (
+                                  <PaginationItem key={i}>
+                                    <PaginationLink
+                                      href="#"
+                                      isActive={tutorPage === i + 1}
+                                      onClick={e => { e.preventDefault(); setTutorPage(i + 1); }}
+                                    >
+                                      {i + 1}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                  <PaginationNext
+                                    href="#"
+                                    onClick={e => { e.preventDefault(); setTutorPage(p => Math.min(tutorPageCount, p + 1)); }}
+                                    aria-disabled={tutorPage === tutorPageCount}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    {/* Students Section */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-dark-blue-gray mb-2 mt-6">Verified Students</h3>
+                      {students.length === 0 ? (
+                        <div className="text-blue-gray text-sm mb-4">No verified students</div>
+                      ) : (
+                        <>
+                          <div className="space-y-4">
+                            {paginatedStudents.map((verifiedUser) => (
+                              <div
+                                key={verifiedUser.id}
+                                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <Avatar className="h-12 w-12">
+                                    <AvatarFallback className="bg-orange text-white">
+                                      {verifiedUser.name.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <h3 className="font-medium text-dark-blue-gray">{verifiedUser.name}</h3>
+                                    <p className="text-sm text-blue-gray">{verifiedUser.email}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <Badge
+                                        variant={verifiedUser.role === "student" ? "default" : "secondary"}
+                                        className="bg-gray-100 text-blue-gray"
+                                      >
+                                        {verifiedUser.role}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-green-600 border-green-200">
+                                        Verified
+                                      </Badge>
+                                      {verifiedUser.academicYear && (
+                                        <Badge variant="outline" className="border-gray-300 text-blue-gray">
+                                          {verifiedUser.academicYear}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {verifiedUser.bio && (
+                                      <p className="text-sm text-blue-gray mt-2 max-w-md line-clamp-2">{verifiedUser.bio}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => unverifyUser(verifiedUser.id)}
+                                    className="text-xs text-yellow-700 border-yellow-300 hover:bg-yellow-50"
+                                  >
+                                    <XCircle className="w-4 h-4 mr-1" />
+                                    Unverify
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        className="text-xs"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-1" />
+                                        Delete
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Are you sure you want to delete this user? This action cannot be undone.
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => rejectUser(verifiedUser.id)}>Delete</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {studentPageCount > 1 && (
+                            <Pagination className="mt-4">
+                              <PaginationContent>
+                                <PaginationItem>
+                                  <PaginationPrevious
+                                    href="#"
+                                    onClick={e => { e.preventDefault(); setStudentPage(p => Math.max(1, p - 1)); }}
+                                    aria-disabled={studentPage === 1}
+                                  />
+                                </PaginationItem>
+                                {[...Array(studentPageCount)].map((_, i) => (
+                                  <PaginationItem key={i}>
+                                    <PaginationLink
+                                      href="#"
+                                      isActive={studentPage === i + 1}
+                                      onClick={e => { e.preventDefault(); setStudentPage(i + 1); }}
+                                    >
+                                      {i + 1}
+                                    </PaginationLink>
+                                  </PaginationItem>
+                                ))}
+                                <PaginationItem>
+                                  <PaginationNext
+                                    href="#"
+                                    onClick={e => { e.preventDefault(); setStudentPage(p => Math.min(studentPageCount, p + 1)); }}
+                                    aria-disabled={studentPage === studentPageCount}
+                                  />
+                                </PaginationItem>
+                              </PaginationContent>
+                            </Pagination>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>
