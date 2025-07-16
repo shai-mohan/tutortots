@@ -10,9 +10,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ProfilePhotoUpload } from "@/components/profile-photo-upload"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, User, Save, Star } from "lucide-react"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 export default function TutorProfile() {
   const { user, updateUser } = useAuth()
@@ -24,12 +26,42 @@ export default function TutorProfile() {
     subjects: "",
     bio: "",
   })
+  const [profilePhoto, setProfilePhoto] = useState("")
 
+  // Add this state for feedback stats
+  const [feedbackStats, setFeedbackStats] = useState({
+    sentimentRating: 0,
+    totalRatings: 0,
+  })
+
+  // Replace the useEffect with this updated version that fetches real feedback data
   useEffect(() => {
     if (!user || user.role !== "tutor") {
-      router.push("/login")
+      router.push("/")
       return
     }
+
+    // Fetch sentiment rating and total ratings from the tutor's profile
+    const fetchProfileStats = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("sentiment_rating, sentiment_total_ratings")
+          .eq("id", user.id)
+          .single()
+
+        if (!error && data) {
+          setFeedbackStats({
+            sentimentRating: data.sentiment_rating ?? 0,
+            totalRatings: data.sentiment_total_ratings ?? 0,
+          })
+        }
+      } catch (error) {
+        console.error("Error fetching profile stats:", error)
+      }
+    }
+
+    fetchProfileStats()
 
     setFormData({
       name: user.name,
@@ -37,6 +69,8 @@ export default function TutorProfile() {
       subjects: user.subjects?.join(", ") || "",
       bio: user.bio || "",
     })
+
+    setProfilePhoto(user.profileImage || "")
   }, [user, router])
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,6 +87,12 @@ export default function TutorProfile() {
       title: "Profile Updated",
       description: "Your profile has been updated successfully",
     })
+  }
+
+  const handlePhotoUpdated = (photoUrl: string) => {
+    setProfilePhoto(photoUrl)
+    // Update user context with new photo
+    updateUser({ profileImage: photoUrl })
   }
 
   if (!user) return null
@@ -72,6 +112,15 @@ export default function TutorProfile() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Profile Photo Upload */}
+          <ProfilePhotoUpload
+            userId={user.id}
+            userName={user.name}
+            currentPhotoUrl={profilePhoto}
+            onPhotoUpdated={handlePhotoUpdated}
+          />
+
+          {/* Profile Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -137,18 +186,20 @@ export default function TutorProfile() {
             </CardHeader>
             <CardContent>
               <div className="text-center space-y-2">
-                <div className="text-3xl font-bold text-yellow-600">{user.rating?.toFixed(1) || "0.0"}</div>
+                <div className="text-3xl font-bold text-yellow-600">{feedbackStats.sentimentRating.toFixed(1)}</div>
                 <div className="flex justify-center">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       className={`h-5 w-5 ${
-                        i < Math.floor(user.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                        i < Math.floor(feedbackStats.sentimentRating)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
                       }`}
                     />
                   ))}
                 </div>
-                <p className="text-gray-600">Based on {user.totalRatings || 0} reviews</p>
+                <p className="text-gray-600">Based on {feedbackStats.totalRatings} reviews</p>
               </div>
             </CardContent>
           </Card>

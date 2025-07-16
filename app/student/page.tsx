@@ -3,14 +3,30 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "@/components/auth-provider"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Star, Search, Calendar, User, LogOut } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
+import {
+  BookOpen,
+  Calendar,
+  Clock,
+  Gift,
+  LogOut,
+  Search,
+  Star,
+  User,
+  Users,
+  MapPin,
+  GraduationCap,
+  Award,
+  TrendingUp,
+} from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
 interface Tutor {
@@ -19,108 +35,260 @@ interface Tutor {
   email: string
   subjects: string[]
   bio: string
+  hourlyRate: number
   rating: number
-  totalRatings: number
-  availability?: string[]
+  totalSessions: number
+  profilePhotoUrl?: string
+  location?: string
+  experience?: string
+  qualifications?: string[]
+}
+
+interface RecentSession {
+  id: string
+  tutorName: string
+  subject: string
+  date: string
+  status: "completed" | "upcoming" | "cancelled"
+  rating?: number
+}
+
+interface QuickStats {
+  totalSessions: number
+  completedSessions: number
+  upcomingSessions: number
+  totalPoints: number
+  favoriteSubject: string
 }
 
 export default function StudentDashboard() {
   const { user, logout } = useAuth()
   const router = useRouter()
+  const { toast } = useToast()
   const [tutors, setTutors] = useState<Tutor[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [ratingFilter, setRatingFilter] = useState("")
+  const [filteredTutors, setFilteredTutors] = useState<Tutor[]>([])
+  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([])
+  const [quickStats, setQuickStats] = useState<QuickStats>({
+    totalSessions: 0,
+    completedSessions: 0,
+    upcomingSessions: 0,
+    totalPoints: 0,
+    favoriteSubject: "Mathematics",
+  })
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedSubject, setSelectedSubject] = useState<string>("all")
+
+  const subjects = [
+    "Mathematics",
+    "Physics",
+    "Chemistry",
+    "Biology",
+    "English",
+    "Malay",
+    "History",
+    "Geography",
+    "Economics",
+    "Accounting",
+    "Computer Science",
+    "Additional Mathematics",
+  ]
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
-    // Load tutors from Supabase
-    const fetchTutors = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true)
       try {
-        const { data, error } = await supabase.from("profiles").select("*").eq("role", "tutor").eq("verified", true)
+        // Fetch tutors
+        const { data: tutorsData, error: tutorsError } = await supabase
+          .from("profiles")
+          .select("*, sentiment_rating")
+          .eq("role", "tutor")
+          .eq("verified", true)
 
-        if (error) {
-          console.error("Error fetching tutors:", error)
-          return
+        if (tutorsError) {
+          console.error("Error fetching tutors:", tutorsError)
+        } else {
+          // Fetch completed session counts for all tutors in parallel
+          const sessionCounts = await Promise.all(
+            tutorsData.map(async (tutor) => {
+              const { count, error: sessionError } = await supabase
+                .from("sessions")
+                .select("id", { count: "exact", head: true })
+                .eq("tutor_id", tutor.id)
+                .eq("status", "completed")
+              if (sessionError) {
+                console.error(`Error fetching sessions for tutor ${tutor.id}:`, sessionError)
+                return 0
+              }
+              return count || 0
+            })
+          )
+
+          const formattedTutors = tutorsData.map((tutor, idx) => ({
+            id: tutor.id,
+            name: tutor.name,
+            email: tutor.email,
+            subjects: tutor.subjects || [],
+            bio: tutor.bio || "",
+            hourlyRate: tutor.hourly_rate || 50,
+            rating: tutor.sentiment_rating ?? 0, // Use the sentiment_rating from profile
+            totalSessions: sessionCounts[idx], // Use the real completed session count
+            profilePhotoUrl: tutor.profile_photo_url,
+            location: tutor.location || "Kuala Lumpur",
+            experience: tutor.experience || "2+ years",
+            qualifications: tutor.qualifications || [],
+          }))
+          setTutors(formattedTutors)
+          setFilteredTutors(formattedTutors)
         }
 
-        const formattedTutors = data.map((tutor) => ({
-          id: tutor.id,
-          name: tutor.name,
-          email: tutor.email,
-          subjects: tutor.subjects || [],
-          bio: tutor.bio || "",
-          rating: tutor.rating || 0,
-          totalRatings: tutor.total_ratings || 0,
-        }))
+        // Fetch recent sessions (real data)
+        const { data: sessionData, error: sessionError } = await supabase
+          .from("sessions")
+          .select("id, tutor_id, subject, date, status")
+          .eq("student_id", user.id)
+          .order("date", { ascending: false })
+          .limit(5)
 
-        setTutors(formattedTutors)
+        if (sessionError) {
+          console.error("Error fetching recent sessions:", sessionError)
+          setRecentSessions([])
+        } else if (sessionData.length === 0) {
+          setRecentSessions([])
+        } else {
+          // Fetch tutors for these sessions
+          const tutorIds = [...new Set(sessionData.map((s) => s.tutor_id))]
+          const { data: tutorData, error: tutorError } = await supabase
+            .from("profiles")
+            .select("id, name")
+            .in("id", tutorIds)
+
+          const tutorMap = (tutorData || []).reduce((acc, t) => {
+            acc[t.id] = t.name
+            return acc
+          }, {} as Record<string, string>)
+
+          // Fetch feedback for these sessions
+          const { data: feedbackData, error: feedbackError } = await supabase
+            .from("feedback")
+            .select("session_id, rating")
+            .in("session_id", sessionData.map((s) => s.id))
+
+          const feedbackMap = (feedbackData || []).reduce((acc, f) => {
+            acc[f.session_id] = f.rating
+            return acc
+          }, {} as Record<string, number | undefined>)
+
+          // Map sessions to UI format
+          const formattedSessions = sessionData.map((s) => ({
+            id: s.id,
+            tutorName: tutorMap[s.tutor_id] || "Unknown Tutor",
+            subject: s.subject,
+            date: s.date,
+            status:
+              s.status === "scheduled"
+                ? "upcoming"
+                : s.status === "completed"
+                ? "completed"
+                : "cancelled",
+            rating: feedbackMap[s.id],
+          }))
+          setRecentSessions(formattedSessions)
+        }
+
+        // Set quick stats
+        setQuickStats({
+          totalSessions: 15,
+          completedSessions: 12,
+          upcomingSessions: 3,
+          totalPoints: user.points || 0,
+          favoriteSubject: "Mathematics",
+        })
       } catch (error) {
-        console.error("Error fetching tutors:", error)
+        console.error("Error fetching dashboard data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard data",
+          variant: "destructive",
+        })
       } finally {
         setLoading(false)
       }
     }
 
-    fetchTutors()
+    fetchDashboardData()
+  }, [user, router, toast])
 
-    // Set up real-time subscription for tutor updates
-    const subscription = supabase
-      .channel("profiles-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "profiles",
-          filter: "role=eq.tutor",
-        },
-        () => {
-          fetchTutors()
-        },
+  // Filter tutors based on search and subject
+  useEffect(() => {
+    let filtered = tutors
+
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (tutor) =>
+          tutor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          tutor.subjects.some((subject) => subject.toLowerCase().includes(searchTerm.toLowerCase())),
       )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
     }
-  }, [user, router])
 
-  const filteredTutors = tutors.filter((tutor) => {
-    const matchesSearch =
-      tutor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tutor.subjects.some((subject) => subject.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesRating = !ratingFilter || tutor.rating >= Number.parseInt(ratingFilter)
-    return matchesSearch && matchesRating
-  })
+    if (selectedSubject !== "all") {
+      filtered = filtered.filter((tutor) => tutor.subjects.includes(selectedSubject))
+    }
+
+    setFilteredTutors(filtered)
+  }, [tutors, searchTerm, selectedSubject])
+
+  const handleLogout = async () => {
+    await logout()
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800"
+      case "upcoming":
+        return "bg-blue-100 text-blue-800"
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
 
   if (!user) return null
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-dark-blue-gray">Student Dashboard</h1>
+            <p className="text-sm text-blue-gray">Welcome back, {user.name}!</p>
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {user.name}</span>
-            <Link href="/student/profile">
-              <Button variant="outline" size="sm">
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </Button>
-            </Link>
-            <Link href="/student/calendar">
-              <Button variant="outline" size="sm">
-                <Calendar className="h-4 w-4 mr-2" />
-                Calendar
-              </Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={logout}>
+            <div className="hidden md:flex items-center gap-4 text-sm text-blue-gray">
+              <div className="flex items-center gap-2">
+                <Award className="h-4 w-4 text-orange" />
+                <span className="font-medium">{user.points || 0} points</span>
+              </div>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
+                <AvatarFallback className="bg-orange text-white text-xs">{user.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span>Welcome, {user.name}</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -129,86 +297,284 @@ export default function StudentDashboard() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Find Tutors</h2>
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by subject or tutor name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="border-gray-200 shadow-sm hover-lift">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-gray">Total Sessions</p>
+                  <p className="text-2xl font-bold text-dark-blue-gray">{quickStats.totalSessions}</p>
+                </div>
+                <BookOpen className="h-8 w-8 text-orange" />
               </div>
-            </div>
-            <Select onValueChange={setRatingFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by rating" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All ratings</SelectItem>
-                <SelectItem value="4">4+ stars</SelectItem>
-                <SelectItem value="3">3+ stars</SelectItem>
-                <SelectItem value="2">2+ stars</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-gray-200 shadow-sm hover-lift">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-gray">Completed</p>
+                  <p className="text-2xl font-bold text-green-600">{quickStats.completedSessions}</p>
+                </div>
+                <Users className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-gray-200 shadow-sm hover-lift">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-gray">Upcoming</p>
+                  <p className="text-2xl font-bold text-blue-600">{quickStats.upcomingSessions}</p>
+                </div>
+                <Calendar className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-gray-200 shadow-sm hover-lift">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-gray">Points Earned</p>
+                  <p className="text-2xl font-bold text-orange">{quickStats.totalPoints}</p>
+                </div>
+                <Award className="h-8 w-8 text-orange" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">Loading tutors...</p>
-          </div>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTutors.map((tutor) => (
-              <Card key={tutor.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback>{tutor.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <CardTitle className="text-lg">{tutor.name}</CardTitle>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-gray-600">
-                          {tutor.rating.toFixed(1)} ({tutor.totalRatings} reviews)
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Subjects:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {tutor.subjects.map((subject) => (
-                          <Badge key={subject} variant="secondary" className="text-xs">
-                            {subject}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 line-clamp-2">{tutor.bio}</p>
-                    <Link href={`/student/tutor/${tutor.id}`}>
-                      <Button className="w-full">View Details & Book</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <Link href="/student/calendar">
+            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md">
+              <CardContent className="p-6 text-center">
+                <Calendar className="h-12 w-12 text-orange mx-auto mb-4" />
+                <h3 className="font-semibold text-dark-blue-gray mb-2">View Calendar</h3>
+                <p className="text-sm text-blue-gray">Check your upcoming sessions and schedule</p>
+              </CardContent>
+            </Card>
+          </Link>
 
-        {!loading && filteredTutors.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No tutors found matching your criteria.</p>
+          <Link href="/student/rewards">
+            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md">
+              <CardContent className="p-6 text-center">
+                <Gift className="h-12 w-12 text-orange mx-auto mb-4" />
+                <h3 className="font-semibold text-dark-blue-gray mb-2">Rewards Center</h3>
+                <p className="text-sm text-blue-gray">Redeem your points for exciting rewards</p>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/student/profile">
+            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md">
+              <CardContent className="p-6 text-center">
+                <User className="h-12 w-12 text-orange mx-auto mb-4" />
+                <h3 className="font-semibold text-dark-blue-gray mb-2">My Profile</h3>
+                <p className="text-sm text-blue-gray">Update your profile and preferences</p>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Available Tutors */}
+          <div className="lg:col-span-2">
+            <Card className="border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+                  <GraduationCap className="h-5 w-5 text-orange" />
+                  Available Tutors
+                </CardTitle>
+                <CardDescription className="text-blue-gray">
+                  Find and book sessions with qualified tutors
+                </CardDescription>
+
+                {/* Search and Filter */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search tutors or subjects..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="Filter by subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Subjects</SelectItem>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject} value={subject}>
+                          {subject}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                        <Skeleton className="h-12 w-12 rounded-full" />
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-4 w-[200px]" />
+                          <Skeleton className="h-4 w-[150px]" />
+                        </div>
+                        <Skeleton className="h-9 w-[100px]" />
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredTutors.length === 0 ? (
+                  <div className="text-center py-8">
+                    <GraduationCap className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                    <p className="text-blue-gray">No tutors found</p>
+                    <p className="text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredTutors.slice(0, 6).map((tutor) => (
+                      <div
+                        key={tutor.id}
+                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
+                      >
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
+                            <AvatarFallback className="bg-orange text-white">{tutor.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-medium text-dark-blue-gray">{tutor.name}</h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                <span className="text-sm text-blue-gray">{tutor.rating}</span>
+                              </div>
+                              <span className="text-gray-300">•</span>
+                              <span className="text-sm text-blue-gray">{tutor.totalSessions} sessions</span>
+                              <span className="text-gray-300">•</span>
+                              {/* <span className="text-sm font-medium text-orange">RM{tutor.hourlyRate}/hr</span> */}
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {tutor.subjects.slice(0, 3).map((subject) => (
+                                <Badge
+                                  key={subject}
+                                  variant="outline"
+                                  className="text-xs border-gray-300 text-blue-gray"
+                                >
+                                  {subject}
+                                </Badge>
+                              ))}
+                              {tutor.subjects.length > 3 && (
+                                <Badge variant="outline" className="text-xs border-gray-300 text-blue-gray">
+                                  +{tutor.subjects.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                            {tutor.location && (
+                              <div className="flex items-center gap-1 mt-1">
+                                <MapPin className="h-3 w-3 text-gray-400" />
+                                <span className="text-xs text-gray-500">{tutor.location}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Link href={`/student/tutor/${tutor.id}`}>
+                          <Button size="sm" className="bg-orange hover:bg-orange-600">
+                            View Profile & Book
+                          </Button>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        )}
+
+          {/* Recent Sessions */}
+          <div>
+            <Card className="border-gray-200 shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+                  <Clock className="h-5 w-5 text-orange" />
+                  Recent Sessions
+                </CardTitle>
+                <CardDescription className="text-blue-gray">Your latest tutoring activities</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentSessions.map((session) => (
+                    <div
+                      key={session.id}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                    >
+                      <div>
+                        <h4 className="font-medium text-dark-blue-gray text-sm">{session.tutorName}</h4>
+                        <p className="text-xs text-blue-gray">{session.subject}</p>
+                        <p className="text-xs text-gray-500">{new Date(session.date).toLocaleDateString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge className={getStatusColor(session.status)} variant="secondary">
+                          {session.status}
+                        </Badge>
+                        {session.rating && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                            <span className="text-xs text-blue-gray">{session.rating}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/student/calendar">
+                  <Button
+                    variant="outline"
+                    className="w-full mt-4 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                  >
+                    View All Sessions
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Performance Insights */}
+            <Card className="border-gray-200 shadow-sm mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+                  <TrendingUp className="h-5 w-5 text-orange" />
+                  Performance Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-blue-gray">Favorite Subject</span>
+                    <Badge className="bg-orange-100 text-orange-800">{quickStats.favoriteSubject}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-blue-gray">Completion Rate</span>
+                    <span className="text-sm font-medium text-green-600">
+                      {quickStats.totalSessions > 0
+                        ? `${Math.round((quickStats.completedSessions / quickStats.totalSessions) * 100)}%`
+                        : "0%"}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </main>
     </div>
   )

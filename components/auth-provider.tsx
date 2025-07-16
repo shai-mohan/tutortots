@@ -5,6 +5,7 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 
 interface User {
   id: string
@@ -18,13 +19,14 @@ interface User {
   academicYear?: string
   rating?: number
   totalRatings?: number
+  points?: number
 }
 
 interface AuthContextType {
   user: User | null
   login: (email: string, password: string) => Promise<boolean>
   register: (userData: any) => Promise<boolean>
-  logout: () => void
+  logout: () => Promise<void>
   updateUser: (userData: Partial<User>) => void
 }
 
@@ -33,6 +35,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const { toast } = useToast()
+  const router = useRouter()
 
   useEffect(() => {
     // Check for stored user session in Supabase
@@ -57,7 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             academicYear: profile.academic_year,
             rating: profile.rating,
             totalRatings: profile.total_ratings,
-            profileImage: profile.profile_image,
+            profileImage: profile.profile_photo_url,
+            points: profile.points || 0,
           })
         }
       }
@@ -85,7 +89,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             academicYear: profile.academic_year,
             rating: profile.rating,
             totalRatings: profile.total_ratings,
-            profileImage: profile.profile_image,
+            profileImage: profile.profile_photo_url,
+            points: profile.points || 0,
           })
         }
       } else if (event === "SIGNED_OUT") {
@@ -208,6 +213,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           bio: userData.bio || null,
           rating: 0,
           total_ratings: 0,
+          qualification_document_url: userData.qualificationDocumentUrl || null,
+          qualification_document_name: userData.qualificationDocumentName || null,
+          qualification_document_type: userData.qualificationDocumentType || null,
+          qualification_document_size: userData.qualificationDocumentSize || null,
         })
 
         if (profileError) {
@@ -241,8 +250,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logout = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
+    try {
+      console.log("🚪 Starting logout process...");
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      // If the only error is AuthSessionMissingError, treat as success
+      if (error && error.name !== "AuthSessionMissingError") {
+        console.error("❌ Logout error:", error);
+        toast({
+          title: "Logout failed",
+          description: "There was an error logging out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Clear user state
+      setUser(null);
+
+      console.log("✅ Logout successful, redirecting to homepage...");
+
+      // Force redirect to homepage
+      router.push("/");
+
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error) {
+      console.error("💥 Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    }
   }
 
   const updateUser = async (userData: Partial<User>) => {
@@ -257,6 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           academic_year: userData.academicYear || user.academicYear,
           subjects: userData.subjects || user.subjects,
           bio: userData.bio || user.bio,
+          profile_photo_url: userData.profileImage !== undefined ? userData.profileImage : user.profileImage,
         })
         .eq("id", user.id)
 
@@ -269,8 +314,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      // Update local state
-      setUser({ ...user, ...userData })
+      // Fetch the latest profile from Supabase
+      const { data: profile, error: fetchError } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+      if (fetchError || !profile) {
+        toast({
+          title: "Update failed",
+          description: fetchError?.message || "Could not fetch updated profile.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Update local state with fresh data
+      setUser({
+        id: user.id,
+        name: profile.name,
+        email: profile.email,
+        role: profile.role,
+        verified: profile.verified,
+        bio: profile.bio,
+        subjects: profile.subjects,
+        academicYear: profile.academic_year,
+        rating: profile.rating,
+        totalRatings: profile.total_ratings,
+        profileImage: profile.profile_photo_url,
+        points: profile.points || 0,
+      })
 
       toast({
         title: "Profile updated",

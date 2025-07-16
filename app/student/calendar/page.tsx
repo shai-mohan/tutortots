@@ -6,17 +6,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { Calendar, ArrowLeft, Star, ExternalLink } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { FeedbackForm } from "@/components/feedback-form"
+import { Calendar, ArrowLeft, ExternalLink, MessageSquare, Star } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -29,81 +21,108 @@ interface Session {
   time: string
   status: "scheduled" | "completed" | "cancelled"
   zoom_link?: string
-  feedback?: {
-    rating: number
-    comment: string
-  }
 }
 
 interface Tutor {
   id: string
   name: string
-  subjects: string[]
+}
+
+interface Feedback {
+  id: string
+  session_id: string
+  rating?: number
+  comment?: string
 }
 
 export default function StudentCalendar() {
   const { user } = useAuth()
   const router = useRouter()
-  const { toast } = useToast()
   const [sessions, setSessions] = useState<Session[]>([])
   const [tutors, setTutors] = useState<Record<string, string>>({})
-  const [feedbackRating, setFeedbackRating] = useState(0)
-  const [feedbackComment, setFeedbackComment] = useState("")
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
+  const [feedback, setFeedback] = useState<Record<string, Feedback>>({})
   const [loading, setLoading] = useState(true)
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
 
   useEffect(() => {
     if (!user || user.role !== "student") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
-    // Load sessions and tutors from Supabase
+    let isMounted = true
+    let subscription: any = null
+
     const fetchData = async () => {
       setLoading(true)
       try {
-        // Fetch sessions
+        // Fetch sessions first to get relevant tutor IDs
         const { data: sessionData, error: sessionError } = await supabase
           .from("sessions")
-          .select("*, feedback(*)")
+          .select("*")
           .eq("student_id", user.id)
+          .order("date", { ascending: false })
 
         if (sessionError) {
           console.error("Error fetching sessions:", sessionError)
+          setLoading(false)
           return
         }
 
-        // Fetch all tutors to get their names
-        const { data: tutorData, error: tutorError } = await supabase
-          .from("profiles")
-          .select("id, name")
-          .eq("role", "tutor")
+        const tutorIds = sessionData.map((s: any) => s.tutor_id)
+        // Remove duplicates
+        const uniqueTutorIds = Array.from(new Set(tutorIds))
+
+        // Fetch tutors and feedback in parallel
+        const [tutorRes, feedbackRes] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id, name")
+            .in("id", uniqueTutorIds.length > 0 ? uniqueTutorIds : ["dummy"]), // avoid empty array error
+          supabase
+            .from("feedback")
+            .select("*")
+            .in("session_id", sessionData.map((s: any) => s.id)),
+        ])
+
+        const { data: tutorData, error: tutorError } = tutorRes
+        const { data: feedbackData, error: feedbackError } = feedbackRes
 
         if (tutorError) {
           console.error("Error fetching tutors:", tutorError)
-          return
+        }
+        if (feedbackError) {
+          console.error("Error fetching feedback:", feedbackError)
         }
 
-        // Create a map of tutor IDs to names
+        // Create maps for easy lookup
         const tutorMap: Record<string, string> = {}
-        tutorData.forEach((tutor) => {
+        tutorData?.forEach((tutor: any) => {
           tutorMap[tutor.id] = tutor.name
         })
 
-        setTutors(tutorMap)
-        setSessions(sessionData)
+        const feedbackMap: Record<string, Feedback> = {}
+        feedbackData?.forEach((fb: any) => {
+          feedbackMap[fb.session_id] = fb
+        })
+
+        if (isMounted) {
+          setTutors(tutorMap)
+          setSessions(sessionData)
+          setFeedback(feedbackMap)
+        }
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     fetchData()
 
-    // Set up real-time subscription for session updates
-    const subscription = supabase
-      .channel("sessions-changes")
+    // Set up real-time subscription
+    subscription = supabase
+      .channel("student-sessions")
       .on(
         "postgres_changes",
         {
@@ -119,7 +138,8 @@ export default function StudentCalendar() {
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
+      isMounted = false
+      if (subscription) subscription.unsubscribe()
     }
   }, [user, router])
 
@@ -127,113 +147,82 @@ export default function StudentCalendar() {
     return tutors[tutorId] || "Unknown Tutor"
   }
 
-  const submitFeedback = async () => {
-    if (!selectedSession || feedbackRating === 0) {
-      toast({
-        title: "Missing Information",
-        description: "Please provide a rating",
-        variant: "destructive",
-      })
-      return
-    }
-
+  // Remove window.location.reload and refetch data instead
+  const handleFeedbackSubmitted = async () => {
+    setSelectedSession(null)
+    // Refetch data to update feedback status
+    setLoading(true)
     try {
-      // Insert feedback
-      const { error: feedbackError } = await supabase.from("feedback").insert({
-        session_id: selectedSession.id,
-        rating: feedbackRating,
-        comment: feedbackComment,
-      })
-
+      // Only refetch feedback for completed sessions
+      const completedSessionIds = sessions.filter((s) => s.status === "completed").map((s) => s.id)
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from("feedback")
+        .select("*")
+        .in("session_id", completedSessionIds)
       if (feedbackError) {
-        toast({
-          title: "Feedback submission failed",
-          description: feedbackError.message,
-          variant: "destructive",
-        })
+        console.error("Error fetching feedback:", feedbackError)
         return
       }
-
-      // Update tutor's rating
-      // First, get current tutor data
-      const { data: tutorData, error: tutorFetchError } = await supabase
-        .from("profiles")
-        .select("rating, total_ratings")
-        .eq("id", selectedSession.tutor_id)
-        .single()
-
-      if (tutorFetchError) {
-        console.error("Error fetching tutor data:", tutorFetchError)
-        return
-      }
-
-      // Calculate new rating
-      const currentRating = tutorData.rating || 0
-      const currentTotalRatings = tutorData.total_ratings || 0
-      const newTotalRatings = currentTotalRatings + 1
-      const newRating = (currentRating * currentTotalRatings + feedbackRating) / newTotalRatings
-
-      // Update tutor profile
-      const { error: tutorUpdateError } = await supabase
-        .from("profiles")
-        .update({
-          rating: newRating,
-          total_ratings: newTotalRatings,
-        })
-        .eq("id", selectedSession.tutor_id)
-
-      if (tutorUpdateError) {
-        console.error("Error updating tutor rating:", tutorUpdateError)
-      }
-
-      toast({
-        title: "Feedback Submitted",
-        description: "Thank you for your feedback!",
+      const feedbackMap: Record<string, Feedback> = {}
+      feedbackData?.forEach((fb: any) => {
+        feedbackMap[fb.session_id] = fb
       })
-
-      setSelectedSession(null)
-      setFeedbackRating(0)
-      setFeedbackComment("")
-
-      // Refresh sessions to show the feedback
-      const { data: updatedSessions } = await supabase
-        .from("sessions")
-        .select("*, feedback(*)")
-        .eq("student_id", user.id)
-
-      if (updatedSessions) {
-        setSessions(updatedSessions)
-      }
+      setFeedback(feedbackMap)
     } catch (error) {
-      console.error("Error submitting feedback:", error)
-      toast({
-        title: "Feedback submission failed",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
+      console.error("Error refetching feedback:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Add cancel logic for students
+  const cancelSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase.from("sessions").update({ status: "cancelled" }).eq("id", sessionId)
+
+      if (error) {
+        alert("Cancellation failed: " + error.message)
+        return
+      }
+
+      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, status: "cancelled" as const } : s)))
+      alert("Session cancelled. The slot is now available again.")
+    } catch (error) {
+      alert("Cancellation failed: " + error)
     }
   }
 
   const upcomingSessions = sessions.filter((s) => s.status === "scheduled")
   const completedSessions = sessions.filter((s) => s.status === "completed")
 
+  if (!user) return null
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100">
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/student">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900">My Calendar</h1>
-          </div>
+          <Link href="/student">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+            <Calendar className="h-8 w-8 text-orange-500" />
+            My Sessions
+          </h1>
+          <p className="text-gray-600">Manage your tutoring sessions and leave feedback</p>
+        </div>
+
         {loading ? (
           <div className="text-center py-12">
             <p className="text-gray-500">Loading your sessions...</p>
@@ -241,40 +230,47 @@ export default function StudentCalendar() {
         ) : (
           <div className="space-y-8">
             <div>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Upcoming Sessions
-              </h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Upcoming Sessions</h2>
               {upcomingSessions.length === 0 ? (
-                <Card>
+                <Card className="border-orange-100">
                   <CardContent className="text-center py-8">
                     <p className="text-gray-500">No upcoming sessions scheduled.</p>
                     <Link href="/student">
-                      <Button className="mt-4">Book a Session</Button>
+                      <Button className="mt-4 bg-orange-500 hover:bg-orange-600">Book a Session</Button>
                     </Link>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {upcomingSessions.map((session) => (
-                    <Card key={session.id}>
+                    <Card key={session.id} className="border-orange-100 hover:border-orange-200 transition-colors">
                       <CardHeader>
-                        <CardTitle className="text-lg">{session.subject}</CardTitle>
+                        <CardTitle className="text-lg text-gray-800">{session.subject}</CardTitle>
                         <CardDescription>with {getTutorName(session.tutor_id)}</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-2">
-                          <p className="text-sm">
-                            <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
-                          </p>
-                          <p className="text-sm">
-                            <strong>Time:</strong> {session.time}
-                          </p>
-                          <Badge variant="outline" className="text-green-600">
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600">
+                              <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              <strong>Time:</strong> {session.time}
+                            </p>
+                          </div>
+                          <Badge variant="outline" className="text-green-600 border-green-200">
                             Scheduled
                           </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full mt-2 border-red-300 text-red-600 hover:bg-red-50"
+                            onClick={() => cancelSession(session.id)}
+                          >
+                            Cancel
+                          </Button>
                           {session.zoom_link && (
-                            <Button size="sm" className="w-full mt-2" asChild>
+                            <Button size="sm" className="w-full bg-orange-500 hover:bg-orange-600" asChild>
                               <a href={session.zoom_link} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="h-4 w-4 mr-2" />
                                 Join Session
@@ -290,103 +286,98 @@ export default function StudentCalendar() {
             </div>
 
             <div>
-              <h2 className="text-xl font-semibold mb-4">Completed Sessions</h2>
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Completed Sessions</h2>
               {completedSessions.length === 0 ? (
-                <Card>
+                <Card className="border-orange-100">
                   <CardContent className="text-center py-8">
                     <p className="text-gray-500">No completed sessions yet.</p>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {completedSessions.map((session) => (
-                    <Card key={session.id}>
-                      <CardHeader>
-                        <CardTitle className="text-lg">{session.subject}</CardTitle>
-                        <CardDescription>with {getTutorName(session.tutor_id)}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <p className="text-sm">
-                            <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
-                          </p>
-                          <p className="text-sm">
-                            <strong>Time:</strong> {session.time}
-                          </p>
-                          <Badge variant="outline" className="text-blue-600">
-                            Completed
-                          </Badge>
-                          {session.feedback ? (
-                            <div className="mt-2 p-2 bg-gray-50 rounded">
-                              <div className="flex items-center gap-1">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`h-4 w-4 ${
-                                      i < session.feedback!.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                              {session.feedback.comment && (
-                                <p className="text-xs text-gray-600 mt-1">{session.feedback.comment}</p>
-                              )}
+                  {completedSessions.map((session) => {
+                    const sessionFeedback = feedback[session.id]
+                    const hasFeedback = !!sessionFeedback
+
+                    return (
+                      <Card key={session.id} className="border-orange-100 hover:border-orange-200 transition-colors">
+                        <CardHeader>
+                          <CardTitle className="text-lg text-gray-800">{session.subject}</CardTitle>
+                          <CardDescription>with {getTutorName(session.tutor_id)}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            <div className="space-y-1">
+                              <p className="text-sm text-gray-600">
+                                <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                <strong>Time:</strong> {session.time}
+                              </p>
                             </div>
-                          ) : (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="w-full mt-2"
-                                  onClick={() => setSelectedSession(session)}
-                                >
-                                  Leave Feedback
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Rate Your Session</DialogTitle>
-                                  <DialogDescription>
-                                    How was your session with {getTutorName(session.tutor_id)}?
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <label className="text-sm font-medium mb-2 block">Rating</label>
-                                    <div className="flex gap-1">
-                                      {Array.from({ length: 5 }).map((_, i) => (
-                                        <button key={i} onClick={() => setFeedbackRating(i + 1)} className="p-1">
-                                          <Star
-                                            className={`h-6 w-6 ${
-                                              i < feedbackRating
-                                                ? "fill-yellow-400 text-yellow-400"
-                                                : "text-gray-300 hover:text-yellow-400"
-                                            }`}
-                                          />
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium mb-2 block">Comment (optional)</label>
-                                    <Textarea
-                                      placeholder="Share your experience..."
-                                      value={feedbackComment}
-                                      onChange={(e) => setFeedbackComment(e.target.value)}
-                                    />
-                                  </div>
-                                  <Button onClick={submitFeedback} className="w-full">
-                                    Submit Feedback
-                                  </Button>
+                            <Badge variant="outline" className="text-blue-600 border-blue-200">
+                              Completed
+                            </Badge>
+
+                            {hasFeedback ? (
+                              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Star className="h-4 w-4 text-green-600" />
+                                  <span className="text-sm font-medium text-green-800">Feedback Submitted</span>
                                 </div>
-                              </DialogContent>
-                            </Dialog>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                                {sessionFeedback.rating && (
+                                  <div className="flex items-center gap-1 mb-1">
+                                    {Array.from({ length: 5 }).map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`h-3 w-3 ${
+                                          i < sessionFeedback.rating!
+                                            ? "fill-orange-400 text-orange-400"
+                                            : "text-gray-300"
+                                        }`}
+                                      />
+                                    ))}
+                                    <span className="text-xs text-gray-600 ml-1">{sessionFeedback.rating}/5</span>
+                                  </div>
+                                )}
+                                {sessionFeedback.comment && (
+                                  <p className="text-xs text-gray-600 italic">
+                                    "{sessionFeedback.comment.substring(0, 50)}..."
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    className="w-full bg-orange-500 hover:bg-orange-600"
+                                    onClick={() => setSelectedSession(session)}
+                                  >
+                                    <MessageSquare className="h-4 w-4 mr-2" />
+                                    Leave Feedback
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-lg">
+                                  <DialogHeader>
+                                    <DialogTitle>Session Feedback</DialogTitle>
+                                  </DialogHeader>
+                                  {selectedSession && (
+                                    <FeedbackForm
+                                      sessionId={selectedSession.id}
+                                      tutorName={getTutorName(selectedSession.tutor_id)}
+                                      subject={selectedSession.subject}
+                                      onFeedbackSubmitted={handleFeedbackSubmitted}
+                                    />
+                                  )}
+                                </DialogContent>
+                              </Dialog>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
                 </div>
               )}
             </div>

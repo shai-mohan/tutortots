@@ -16,7 +16,18 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { Calendar, User, LogOut, Plus, ExternalLink, CheckCircle } from "lucide-react"
+import {
+  Calendar,
+  User,
+  LogOut,
+  Plus,
+  ExternalLink,
+  CheckCircle,
+  MessageSquare,
+  Clock,
+  Gift,
+  Coins,
+} from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
 
@@ -37,6 +48,11 @@ interface Student {
   email: string
 }
 
+interface FeedbackStats {
+  sentimentRating: number
+  totalRatings: number
+}
+
 export default function TutorDashboard() {
   const { user, logout } = useAuth()
   const router = useRouter()
@@ -46,10 +62,14 @@ export default function TutorDashboard() {
   const [zoomLink, setZoomLink] = useState("")
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [feedbackStats, setFeedbackStats] = useState<FeedbackStats>({
+    sentimentRating: 0,
+    totalRatings: 0,
+  })
 
   useEffect(() => {
     if (!user || user.role !== "tutor") {
-      router.push("/login")
+      router.push("/")
       return
     }
 
@@ -77,6 +97,22 @@ export default function TutorDashboard() {
         if (studentError) {
           console.error("Error fetching students:", studentError)
           return
+        }
+
+        // Fetch sentiment rating from tutor's profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("sentiment_rating, sentiment_total_ratings")
+          .eq("id", user.id)
+          .single()
+
+        if (profileError) {
+          console.error("Error fetching sentiment stats:", profileError)
+        } else if (profile) {
+          setFeedbackStats({
+            sentimentRating: profile.sentiment_rating ?? 0,
+            totalRatings: profile.sentiment_total_ratings ?? 0,
+          })
         }
 
         // Create a map of student IDs to names
@@ -194,6 +230,40 @@ export default function TutorDashboard() {
     }
   }
 
+  // Add reject/cancel logic
+  const rejectSession = async (sessionId: string) => {
+    try {
+      const { error } = await supabase.from("sessions").update({ status: "cancelled" }).eq("id", sessionId)
+
+      if (error) {
+        toast({
+          title: "Rejection Failed",
+          description: error.message,
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "Session Rejected",
+        description: "The session has been cancelled and the slot is now available again.",
+      })
+
+      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, status: "cancelled" as const } : s)))
+    } catch (error) {
+      console.error("Error rejecting session:", error)
+      toast({
+        title: "Rejection Failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleLogout = async () => {
+    await logout()
+  }
+
   const upcomingSessions = sessions.filter((s) => s.status === "scheduled")
   const completedSessions = sessions.filter((s) => s.status === "completed")
 
@@ -201,18 +271,63 @@ export default function TutorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Tutor Dashboard</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-dark-blue-gray">Tutor Dashboard</h1>
+            <p className="text-sm text-blue-gray">Manage your sessions and connect with students</p>
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">Welcome, {user.name}</span>
+            <div className="hidden md:flex items-center gap-2 text-sm text-blue-gray">
+              <span>Welcome, {user.name}</span>
+            </div>
+            <Link href="/tutor/rewards">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+              >
+                <Gift className="h-4 w-4 mr-2" />
+                <Coins className="h-4 w-4 mr-1" />
+                {user.points || 0}
+              </Button>
+            </Link>
+            <Link href="/tutor/availability">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+              >
+                <Clock className="h-4 w-4 mr-2" />
+                Availability
+              </Button>
+            </Link>
+            <Link href="/tutor/feedback">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Feedback
+              </Button>
+            </Link>
             <Link href="/tutor/profile">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+              >
                 <User className="h-4 w-4 mr-2" />
                 Profile
               </Button>
             </Link>
-            <Button variant="outline" size="sm" onClick={logout}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -223,68 +338,79 @@ export default function TutorDashboard() {
       <main className="container mx-auto px-4 py-8">
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">Loading your dashboard...</p>
+            <p className="text-blue-gray">Loading your dashboard...</p>
           </div>
         ) : (
           <>
             <div className="grid lg:grid-cols-4 gap-6 mb-8">
-              <Card>
+              <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-blue-600">{upcomingSessions.length}</div>
-                  <p className="text-sm text-gray-600">Upcoming Sessions</p>
+                  <div className="text-2xl font-bold text-orange">{upcomingSessions.length}</div>
+                  <p className="text-sm text-blue-gray">Upcoming Sessions</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-6">
                   <div className="text-2xl font-bold text-green-600">{completedSessions.length}</div>
-                  <p className="text-sm text-gray-600">Completed Sessions</p>
+                  <p className="text-sm text-blue-gray">Completed Sessions</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-yellow-600">{user.rating?.toFixed(1) || "0.0"}</div>
-                  <p className="text-sm text-gray-600">Average Rating</p>
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {feedbackStats.sentimentRating.toFixed(1)}
+                    </div>
+                    <MessageSquare className="h-5 w-5 text-yellow-600" />
+                  </div>
+                  <p className="text-sm text-blue-gray">Avg. Sentiment Rating</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Based on {feedbackStats.totalRatings} feedback
+                  </p>
                 </CardContent>
               </Card>
-              <Card>
+
+              <Card className="border-gray-200 shadow-sm">
                 <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-purple-600">{user.totalRatings || 0}</div>
-                  <p className="text-sm text-gray-600">Total Reviews</p>
+                  <div className="text-2xl font-bold text-dark-blue-gray">{feedbackStats.totalRatings}</div>
+                  <p className="text-sm text-blue-gray">Total Reviews</p>
                 </CardContent>
               </Card>
             </div>
 
             <div className="space-y-8">
               <div>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-dark-blue-gray">
+                  <Calendar className="h-5 w-5 text-orange" />
                   Upcoming Sessions
                 </h2>
                 {upcomingSessions.length === 0 ? (
-                  <Card>
+                  <Card className="border-gray-200 shadow-sm">
                     <CardContent className="text-center py-8">
-                      <p className="text-gray-500">No upcoming sessions scheduled.</p>
+                      <p className="text-blue-gray">No upcoming sessions scheduled.</p>
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {upcomingSessions.map((session) => (
-                      <Card key={session.id}>
+                      <Card key={session.id} className="card-clean hover-lift">
                         <CardHeader>
-                          <CardTitle className="text-lg">{session.subject}</CardTitle>
-                          <CardDescription>with {getStudentName(session.student_id)}</CardDescription>
+                          <CardTitle className="text-lg text-dark-blue-gray">{session.subject}</CardTitle>
+                          <CardDescription className="text-blue-gray">
+                            with {getStudentName(session.student_id)}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
                             <div className="space-y-1">
-                              <p className="text-sm">
+                              <p className="text-sm text-blue-gray">
                                 <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
                               </p>
-                              <p className="text-sm">
+                              <p className="text-sm text-blue-gray">
                                 <strong>Time:</strong> {session.time}
                               </p>
                             </div>
-                            <Badge variant="outline" className="text-green-600">
+                            <Badge variant="outline" className="text-green-600 border-green-200">
                               Scheduled
                             </Badge>
 
@@ -295,7 +421,7 @@ export default function TutorDashboard() {
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="flex-1"
+                                      className="flex-1 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
                                       onClick={() => setSelectedSession(session)}
                                     >
                                       <Plus className="h-4 w-4 mr-1" />
@@ -314,15 +440,24 @@ export default function TutorDashboard() {
                                         placeholder="https://zoom.us/j/..."
                                         value={zoomLink}
                                         onChange={(e) => setZoomLink(e.target.value)}
+                                        className="focus:ring-orange focus:border-orange"
                                       />
-                                      <Button onClick={addZoomLink} className="w-full">
+                                      <Button
+                                        onClick={addZoomLink}
+                                        className="w-full bg-orange hover:bg-orange text-white"
+                                      >
                                         Add Link
                                       </Button>
                                     </div>
                                   </DialogContent>
                                 </Dialog>
                               ) : (
-                                <Button size="sm" variant="outline" className="flex-1" asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="flex-1 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                                  asChild
+                                >
                                   <a href={session.zoom_link} target="_blank" rel="noopener noreferrer">
                                     <ExternalLink className="h-4 w-4 mr-1" />
                                     Join
@@ -330,9 +465,22 @@ export default function TutorDashboard() {
                                 </Button>
                               )}
 
-                              <Button size="sm" onClick={() => markCompleted(session.id)} className="flex-1">
+                              <Button
+                                size="sm"
+                                onClick={() => markCompleted(session.id)}
+                                className="flex-1 bg-orange hover:bg-orange text-white"
+                              >
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 Complete
+                              </Button>
+                              {/* Reject button */}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                                onClick={() => rejectSession(session.id)}
+                              >
+                                Reject
                               </Button>
                             </div>
                           </div>
@@ -344,30 +492,32 @@ export default function TutorDashboard() {
               </div>
 
               <div>
-                <h2 className="text-xl font-semibold mb-4">Recent Completed Sessions</h2>
+                <h2 className="text-xl font-semibold mb-4 text-dark-blue-gray">Recent Completed Sessions</h2>
                 {completedSessions.length === 0 ? (
-                  <Card>
+                  <Card className="border-gray-200 shadow-sm">
                     <CardContent className="text-center py-8">
-                      <p className="text-gray-500">No completed sessions yet.</p>
+                      <p className="text-blue-gray">No completed sessions yet.</p>
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {completedSessions.slice(0, 6).map((session) => (
-                      <Card key={session.id}>
+                      <Card key={session.id} className="card-clean hover-lift">
                         <CardHeader>
-                          <CardTitle className="text-lg">{session.subject}</CardTitle>
-                          <CardDescription>with {getStudentName(session.student_id)}</CardDescription>
+                          <CardTitle className="text-lg text-dark-blue-gray">{session.subject}</CardTitle>
+                          <CardDescription className="text-blue-gray">
+                            with {getStudentName(session.student_id)}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
-                            <p className="text-sm">
+                            <p className="text-sm text-blue-gray">
                               <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
                             </p>
-                            <p className="text-sm">
+                            <p className="text-sm text-blue-gray">
                               <strong>Time:</strong> {session.time}
                             </p>
-                            <Badge variant="outline" className="text-blue-600">
+                            <Badge variant="outline" className="text-blue-600 border-blue-200">
                               Completed
                             </Badge>
                           </div>

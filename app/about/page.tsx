@@ -21,12 +21,9 @@ export default function AboutPage() {
               <Link href="/about" className="text-blue-600 font-medium">
                 About
               </Link>
-              <Link href="#contact" className="text-gray-600 hover:text-gray-900">
-                Contact
-              </Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/login">
+              <Link href="/">
                 <Button variant="ghost">Login</Button>
               </Link>
               <Link href="/register">
@@ -383,7 +380,7 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Tutortots. All rights reserved.</p>
+            <p>&copy; 2025 Tutortots. All rights reserved.</p>
           </div>
         </div>
       </footer>
