@@ -50,10 +50,13 @@ export default function StudentCalendar() {
       return
     }
 
+    let isMounted = true
+    let subscription: any = null
+
     const fetchData = async () => {
       setLoading(true)
       try {
-        // Fetch sessions
+        // Fetch sessions first to get relevant tutor IDs
         const { data: sessionData, error: sessionError } = await supabase
           .from("sessions")
           .select("*")
@@ -62,58 +65,63 @@ export default function StudentCalendar() {
 
         if (sessionError) {
           console.error("Error fetching sessions:", sessionError)
+          setLoading(false)
           return
         }
 
-        // Fetch tutors
-        const { data: tutorData, error: tutorError } = await supabase
-          .from("profiles")
-          .select("id, name")
-          .eq("role", "tutor")
+        const tutorIds = sessionData.map((s: any) => s.tutor_id)
+        // Remove duplicates
+        const uniqueTutorIds = Array.from(new Set(tutorIds))
+
+        // Fetch tutors and feedback in parallel
+        const [tutorRes, feedbackRes] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id, name")
+            .in("id", uniqueTutorIds.length > 0 ? uniqueTutorIds : ["dummy"]), // avoid empty array error
+          supabase
+            .from("feedback")
+            .select("*")
+            .in("session_id", sessionData.map((s: any) => s.id)),
+        ])
+
+        const { data: tutorData, error: tutorError } = tutorRes
+        const { data: feedbackData, error: feedbackError } = feedbackRes
 
         if (tutorError) {
           console.error("Error fetching tutors:", tutorError)
-          return
         }
-
-        // Fetch existing feedback
-        const { data: feedbackData, error: feedbackError } = await supabase
-          .from("feedback")
-          .select("*")
-          .in(
-            "session_id",
-            sessionData.map((s) => s.id),
-          )
-
         if (feedbackError) {
           console.error("Error fetching feedback:", feedbackError)
         }
 
         // Create maps for easy lookup
         const tutorMap: Record<string, string> = {}
-        tutorData.forEach((tutor) => {
+        tutorData?.forEach((tutor: any) => {
           tutorMap[tutor.id] = tutor.name
         })
 
         const feedbackMap: Record<string, Feedback> = {}
-        feedbackData?.forEach((fb) => {
+        feedbackData?.forEach((fb: any) => {
           feedbackMap[fb.session_id] = fb
         })
 
-        setTutors(tutorMap)
-        setSessions(sessionData)
-        setFeedback(feedbackMap)
+        if (isMounted) {
+          setTutors(tutorMap)
+          setSessions(sessionData)
+          setFeedback(feedbackMap)
+        }
       } catch (error) {
         console.error("Error fetching data:", error)
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     fetchData()
 
     // Set up real-time subscription
-    const subscription = supabase
+    subscription = supabase
       .channel("student-sessions")
       .on(
         "postgres_changes",
@@ -130,7 +138,8 @@ export default function StudentCalendar() {
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
+      isMounted = false
+      if (subscription) subscription.unsubscribe()
     }
   }, [user, router])
 
@@ -138,10 +147,32 @@ export default function StudentCalendar() {
     return tutors[tutorId] || "Unknown Tutor"
   }
 
-  const handleFeedbackSubmitted = () => {
+  // Remove window.location.reload and refetch data instead
+  const handleFeedbackSubmitted = async () => {
     setSelectedSession(null)
-    // Refresh data to update feedback status
-    window.location.reload()
+    // Refetch data to update feedback status
+    setLoading(true)
+    try {
+      // Only refetch feedback for completed sessions
+      const completedSessionIds = sessions.filter((s) => s.status === "completed").map((s) => s.id)
+      const { data: feedbackData, error: feedbackError } = await supabase
+        .from("feedback")
+        .select("*")
+        .in("session_id", completedSessionIds)
+      if (feedbackError) {
+        console.error("Error fetching feedback:", feedbackError)
+        return
+      }
+      const feedbackMap: Record<string, Feedback> = {}
+      feedbackData?.forEach((fb: any) => {
+        feedbackMap[fb.session_id] = fb
+      })
+      setFeedback(feedbackMap)
+    } catch (error) {
+      console.error("Error refetching feedback:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Add cancel logic for students
