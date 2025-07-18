@@ -147,7 +147,7 @@ useEffect(() => {
           <div className="flex justify-between items-center h-16">
             {/* Logo/Brand */}
             <div className="flex items-center space-x-3">
-              <GraduationCap className="h-8 w-8 text-orange" />
+              <img src="/logo.png" alt="Tutortots Logo" className="h-8 w-8 object-contain" />
               <span className="text-xl font-bold text-dark-blue-gray">Tutortots</span>
             </div>
 
