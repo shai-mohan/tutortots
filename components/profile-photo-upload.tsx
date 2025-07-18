@@ -246,7 +246,7 @@ export function ProfilePhotoUpload({ userId, userName, currentPhotoUrl, onPhotoU
               <Button
                 onClick={handleUpload}
                 disabled={isUploading}
-                className="flex-1 bg-orange-custom hover:bg-orange-600"
+                className="flex-1 bg-orange-600 hover:bg-orange-300"
               >
                 {isUploading ? "Uploading..." : "Upload Photo"}
               </Button>

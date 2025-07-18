@@ -450,7 +450,7 @@ useEffect(() => {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">How Tutortots Works</h2>
             <p className="text-lg text-gray-600">Simple steps to connect with the perfect tutor</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-8">
             <Card className="p-8 text-center hover:shadow-lg transition-shadow">
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Users className="h-8 w-8 text-blue-600" />
@@ -478,6 +478,15 @@ useEffect(() => {
               <h3 className="text-xl font-semibold text-gray-900 mb-4">3. Book & Learn</h3>
               <p className="text-gray-600">
                 Schedule sessions at your convenience. Join online sessions and track your progress with built-in tools.
+              </p>
+            </Card>
+            <Card className="p-8 text-center hover:shadow-lg transition-shadow">
+              <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Star className="h-8 w-8 text-yellow-500" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">4. Redeem Rewards</h3>
+              <p className="text-gray-600">
+                Earn points by joining tutoring sessions and redeem them for exciting rewards in our platform.
               </p>
             </Card>
           </div>
@@ -521,7 +530,7 @@ useEffect(() => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center space-x-2 mb-4">
-                <GraduationCap className="h-6 w-6 text-orange" />
+                <img src="/logo.png" alt="Tutortots Logo" className="h-8 w-8 object-contain" />
                 <span className="text-lg font-bold">Tutortots</span>
               </div>
               <p className="text-gray-300 text-sm">
@@ -549,21 +558,6 @@ useEffect(() => {
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold mb-4">Support</h3>
-              <ul className="space-y-2 text-gray-300 text-sm">
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-orange transition-colors">
-                    FAQ
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
               <h3 className="font-semibold mb-4">University</h3>
               <ul className="space-y-2 text-gray-300 text-sm">
                 <li>
@@ -574,6 +568,11 @@ useEffect(() => {
                 <li>
                   <a href="https://elearn.sunway.edu.my/" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors">
                     eLearn - Student Portal
+                  </a>
+                </li>
+                <li>
+                  <a href="https://izone.sunway.edu.my/" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors">
+                    iZone - Student Portal
                   </a>
                 </li>
               </ul>
