@@ -254,7 +254,7 @@ useEffect(() => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="text-3xl sm:text-4xl font-bold mb-2 text-orange">
-                <CountUp end={stats.students} duration={2} />+
+                <CountUp end={stats.students} duration={2} />
               </div>
               <div className="text-gray-300 text-sm sm:text-base">Active Students</div>
             </div>
