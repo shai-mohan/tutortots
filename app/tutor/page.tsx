@@ -27,6 +27,7 @@ import {
   Clock,
   Gift,
   Coins,
+  Menu,
 } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
@@ -62,6 +63,7 @@ export default function TutorDashboard() {
   const [zoomLink, setZoomLink] = useState("")
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats>({
     sentimentRating: 0,
     totalRatings: 0,
@@ -272,116 +274,196 @@ export default function TutorDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-dark-blue-gray">Tutor Dashboard</h1>
-            <p className="text-sm text-blue-gray">Manage your sessions and connect with students</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 text-sm text-blue-gray">
-              <span>Welcome, {user.name}</span>
+        <div className="container mx-auto px-4 py-4">
+          {/* Mobile Header */}
+          <div className="flex md:hidden justify-between items-center">
+            <div>
+              <h1 className="text-xl font-bold text-dark-blue-gray">Tutor Dashboard</h1>
+              <p className="text-xs text-blue-gray">Manage your sessions</p>
             </div>
-            <Link href="/tutor/rewards">
+            <div className="flex items-center gap-2">
+              <Link href="/tutor/rewards">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent px-2"
+                >
+                  <Gift className="h-4 w-4 mr-1" />
+                  <Coins className="h-4 w-4" />
+                  <span className="ml-1">{user.points || 0}</span>
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="sm"
-                className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
-              >
-                <Gift className="h-4 w-4 mr-2" />
-                <Coins className="h-4 w-4 mr-1" />
-                {user.points || 0}
-              </Button>
-            </Link>
-            <Link href="/tutor/availability">
-              <Button
-                variant="outline"
-                size="sm"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
               >
-                <Clock className="h-4 w-4 mr-2" />
-                Availability
+                <Menu className="h-4 w-4" />
               </Button>
-            </Link>
-            <Link href="/tutor/feedback">
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+              <div className="flex flex-col gap-2">
+                <Link href="/tutor/availability">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Availability
+                  </Button>
+                </Link>
+                <Link href="/tutor/feedback">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Feedback
+                  </Button>
+                </Link>
+                <Link href="/tutor/profile">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="w-full justify-start border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Header */}
+          <div className="hidden md:flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-dark-blue-gray">Tutor Dashboard</h1>
+              <p className="text-sm text-blue-gray">Manage your sessions and connect with students</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-blue-gray">
+                <span>Welcome, {user.name}</span>
+              </div>
+              <Link href="/tutor/rewards">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-orange-200 text-orange-600 hover:bg-orange-50 bg-transparent"
+                >
+                  <Gift className="h-4 w-4 mr-2" />
+                  <Coins className="h-4 w-4 mr-1" />
+                  {user.points || 0}
+                </Button>
+              </Link>
+              <Link href="/tutor/availability">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  Availability
+                </Button>
+              </Link>
+              <Link href="/tutor/feedback">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Feedback
+                </Button>
+              </Link>
+              <Link href="/tutor/profile">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="sm"
+                onClick={handleLogout}
                 className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
               >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Feedback
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
-            </Link>
-            <Link href="/tutor/profile">
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
-              >
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 md:py-8">
         {loading ? (
           <div className="text-center py-12">
             <p className="text-blue-gray">Loading your dashboard...</p>
           </div>
         ) : (
           <>
-            <div className="grid lg:grid-cols-4 gap-6 mb-8">
+            {/* Stats Cards - Responsive Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
               <Card className="border-gray-200 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-orange">{upcomingSessions.length}</div>
-                  <p className="text-sm text-blue-gray">Upcoming Sessions</p>
+                <CardContent className="p-4 md:p-6">
+                  <div className="text-xl md:text-2xl font-bold text-orange">{upcomingSessions.length}</div>
+                  <p className="text-xs md:text-sm text-blue-gray">Upcoming Sessions</p>
                 </CardContent>
               </Card>
               <Card className="border-gray-200 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-green-600">{completedSessions.length}</div>
-                  <p className="text-sm text-blue-gray">Completed Sessions</p>
+                <CardContent className="p-4 md:p-6">
+                  <div className="text-xl md:text-2xl font-bold text-green-600">{completedSessions.length}</div>
+                  <p className="text-xs md:text-sm text-blue-gray">Completed Sessions</p>
                 </CardContent>
               </Card>
               <Card className="border-gray-200 shadow-sm">
-                <CardContent className="p-6">
+                <CardContent className="p-4 md:p-6">
                   <div className="flex items-center gap-2">
-                    <div className="text-2xl font-bold text-yellow-600">
+                    <div className="text-xl md:text-2xl font-bold text-yellow-600">
                       {feedbackStats.sentimentRating.toFixed(1)}
                     </div>
-                    <MessageSquare className="h-5 w-5 text-yellow-600" />
+                    <MessageSquare className="h-4 w-4 md:h-5 md:w-5 text-yellow-600" />
                   </div>
-                  <p className="text-sm text-blue-gray">Avg. Sentiment Rating</p>
+                  <p className="text-xs md:text-sm text-blue-gray">Avg. Sentiment Rating</p>
                   <p className="text-xs text-gray-500 mt-1">
                     Based on {feedbackStats.totalRatings} feedback
                   </p>
                 </CardContent>
               </Card>
-
               <Card className="border-gray-200 shadow-sm">
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-dark-blue-gray">{feedbackStats.totalRatings}</div>
-                  <p className="text-sm text-blue-gray">Total Reviews</p>
+                <CardContent className="p-4 md:p-6">
+                  <div className="text-xl md:text-2xl font-bold text-dark-blue-gray">{feedbackStats.totalRatings}</div>
+                  <p className="text-xs md:text-sm text-blue-gray">Total Reviews</p>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-6 md:space-y-8">
+              {/* Upcoming Sessions */}
               <div>
-                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-dark-blue-gray">
-                  <Calendar className="h-5 w-5 text-orange" />
+                <h2 className="text-lg md:text-xl font-semibold mb-4 flex items-center gap-2 text-dark-blue-gray">
+                  <Calendar className="h-4 w-4 md:h-5 md:w-5 text-orange" />
                   Upcoming Sessions
                 </h2>
                 {upcomingSessions.length === 0 ? (
@@ -391,44 +473,46 @@ export default function TutorDashboard() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {upcomingSessions.map((session) => (
                       <Card key={session.id} className="card-clean hover-lift">
-                        <CardHeader>
-                          <CardTitle className="text-lg text-dark-blue-gray">{session.subject}</CardTitle>
-                          <CardDescription className="text-blue-gray">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base md:text-lg text-dark-blue-gray">{session.subject}</CardTitle>
+                          <CardDescription className="text-blue-gray text-sm">
                             with {getStudentName(session.student_id)}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
                             <div className="space-y-1">
-                              <p className="text-sm text-blue-gray">
+                              <p className="text-xs md:text-sm text-blue-gray">
                                 <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
                               </p>
-                              <p className="text-sm text-blue-gray">
+                              <p className="text-xs md:text-sm text-blue-gray">
                                 <strong>Time:</strong> {session.time}
                               </p>
                             </div>
-                            <Badge variant="outline" className="text-green-600 border-green-200">
+                            <Badge variant="outline" className="text-green-600 border-green-200 text-xs">
                               Scheduled
                             </Badge>
 
-                            <div className="flex gap-2">
+                            {/* Mobile Button Layout */}
+                            <div className="grid grid-cols-2 gap-2 md:flex md:gap-2">
                               {!session.zoom_link ? (
                                 <Dialog>
                                   <DialogTrigger asChild>
                                     <Button
                                       size="sm"
                                       variant="outline"
-                                      className="flex-1 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                                      className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent text-xs md:text-sm"
                                       onClick={() => setSelectedSession(session)}
                                     >
-                                      <Plus className="h-4 w-4 mr-1" />
-                                      Add Zoom
+                                      <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                      <span className="hidden sm:inline">Add Zoom</span>
+                                      <span className="sm:hidden">Zoom</span>
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent>
+                                  <DialogContent className="sm:max-w-md">
                                     <DialogHeader>
                                       <DialogTitle>Add Zoom Link</DialogTitle>
                                       <DialogDescription>
@@ -455,12 +539,13 @@ export default function TutorDashboard() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="flex-1 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                                  className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent text-xs md:text-sm"
                                   asChild
                                 >
                                   <a href={session.zoom_link} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-4 w-4 mr-1" />
-                                    Join
+                                    <ExternalLink className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                    <span className="hidden sm:inline">Join</span>
+                                    <span className="sm:hidden">Join</span>
                                   </a>
                                 </Button>
                               )}
@@ -468,21 +553,23 @@ export default function TutorDashboard() {
                               <Button
                                 size="sm"
                                 onClick={() => markCompleted(session.id)}
-                                className="flex-1 bg-orange hover:bg-orange text-white"
+                                className="bg-orange hover:bg-orange text-white text-xs md:text-sm"
                               >
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Complete
-                              </Button>
-                              {/* Reject button */}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                                onClick={() => rejectSession(session.id)}
-                              >
-                                Reject
+                                <CheckCircle className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                                <span className="hidden sm:inline">Complete</span>
+                                <span className="sm:hidden">Done</span>
                               </Button>
                             </div>
+                            
+                            {/* Reject button - Full width on mobile */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-red-300 text-red-600 hover:bg-red-50 text-xs md:text-sm"
+                              onClick={() => rejectSession(session.id)}
+                            >
+                              Reject Session
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -491,8 +578,9 @@ export default function TutorDashboard() {
                 )}
               </div>
 
+              {/* Completed Sessions */}
               <div>
-                <h2 className="text-xl font-semibold mb-4 text-dark-blue-gray">Recent Completed Sessions</h2>
+                <h2 className="text-lg md:text-xl font-semibold mb-4 text-dark-blue-gray">Recent Completed Sessions</h2>
                 {completedSessions.length === 0 ? (
                   <Card className="border-gray-200 shadow-sm">
                     <CardContent className="text-center py-8">
@@ -500,24 +588,24 @@ export default function TutorDashboard() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {completedSessions.slice(0, 6).map((session) => (
                       <Card key={session.id} className="card-clean hover-lift">
-                        <CardHeader>
-                          <CardTitle className="text-lg text-dark-blue-gray">{session.subject}</CardTitle>
-                          <CardDescription className="text-blue-gray">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base md:text-lg text-dark-blue-gray">{session.subject}</CardTitle>
+                          <CardDescription className="text-blue-gray text-sm">
                             with {getStudentName(session.student_id)}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-2">
-                            <p className="text-sm text-blue-gray">
+                            <p className="text-xs md:text-sm text-blue-gray">
                               <strong>Date:</strong> {new Date(session.date).toLocaleDateString()}
                             </p>
-                            <p className="text-sm text-blue-gray">
+                            <p className="text-xs md:text-sm text-blue-gray">
                               <strong>Time:</strong> {session.time}
                             </p>
-                            <Badge variant="outline" className="text-blue-600 border-blue-200">
+                            <Badge variant="outline" className="text-blue-600 border-blue-200 text-xs">
                               Completed
                             </Badge>
                           </div>
