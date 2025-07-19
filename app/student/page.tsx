@@ -599,7 +599,7 @@ export default function StudentDashboard() {
                           <p className="text-xs text-gray-500">{new Date(session.date).toLocaleDateString()}</p>
                         </div>
                         <div className="flex flex-col sm:items-end gap-1">
-                          <Badge className={getStatusColor(session.status)} variant="secondary" className="text-xs">
+                          <Badge className={`${getStatusColor(session.status)} text-xs`} variant="secondary">
                             {session.status}
                           </Badge>
                           {session.rating && (
