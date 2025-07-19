@@ -26,6 +26,7 @@ import {
   GraduationCap,
   Award,
   TrendingUp,
+  Menu,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 
@@ -80,6 +81,7 @@ export default function StudentDashboard() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedSubject, setSelectedSubject] = useState<string>("all")
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const subjects = [
     "Mathematics",
@@ -319,147 +321,162 @@ export default function StudentDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-dark-blue-gray">Student Dashboard</h1>
-            <p className="text-sm text-blue-gray">Welcome back, {user.name}!</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-4 text-sm text-blue-gray">
-              <div className="flex items-center gap-2">
-                <Award className="h-4 w-4 text-orange" />
-                <span className="font-medium">{user.points || 0} points</span>
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-dark-blue-gray">Student Dashboard</h1>
+                <p className="text-sm text-blue-gray">Welcome back, {user.name}!</p>
               </div>
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
-                <AvatarFallback className="bg-orange text-white text-xs">{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span>Welcome, {user.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="sm:hidden"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            
+            <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-4 ${isMobileMenuOpen ? 'block' : 'hidden sm:flex'}`}>
+              <div className="flex items-center gap-4 text-sm text-blue-gray w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-orange" />
+                  <span className="font-medium">{user.points || 0} points</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
+                    <AvatarFallback className="bg-orange text-white text-xs">{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline">Welcome, {user.name}</span>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent w-full sm:w-auto"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 sm:py-8">
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="border-gray-200 shadow-sm hover-lift">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-gray">Total Sessions</p>
-                  <p className="text-2xl font-bold text-dark-blue-gray">{quickStats.totalSessions}</p>
+                  <p className="text-xs sm:text-sm font-medium text-blue-gray">Total Sessions</p>
+                  <p className="text-lg sm:text-2xl font-bold text-dark-blue-gray">{quickStats.totalSessions}</p>
                 </div>
-                <BookOpen className="h-8 w-8 text-orange" />
+                <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-orange" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-gray-200 shadow-sm hover-lift">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-gray">Completed</p>
-                  <p className="text-2xl font-bold text-green-600">{quickStats.completedSessions}</p>
+                  <p className="text-xs sm:text-sm font-medium text-blue-gray">Completed</p>
+                  <p className="text-lg sm:text-2xl font-bold text-green-600">{quickStats.completedSessions}</p>
                 </div>
-                <Users className="h-8 w-8 text-green-600" />
+                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-gray-200 shadow-sm hover-lift">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-gray">Upcoming</p>
-                  <p className="text-2xl font-bold text-blue-600">{quickStats.upcomingSessions}</p>
+                  <p className="text-xs sm:text-sm font-medium text-blue-gray">Upcoming</p>
+                  <p className="text-lg sm:text-2xl font-bold text-blue-600">{quickStats.upcomingSessions}</p>
                 </div>
-                <Calendar className="h-8 w-8 text-blue-600" />
+                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-gray-200 shadow-sm hover-lift">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-blue-gray">Points Earned</p>
-                  <p className="text-2xl font-bold text-orange">{quickStats.totalPoints}</p>
+                  <p className="text-xs sm:text-sm font-medium text-blue-gray">Points Earned</p>
+                  <p className="text-lg sm:text-2xl font-bold text-orange">{quickStats.totalPoints}</p>
                 </div>
-                <Award className="h-8 w-8 text-orange" />
+                <Award className="h-6 w-6 sm:h-8 sm:w-8 text-orange" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Link href="/student/calendar">
-            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md">
-              <CardContent className="p-6 text-center">
-                <Calendar className="h-12 w-12 text-orange mx-auto mb-4" />
-                <h3 className="font-semibold text-dark-blue-gray mb-2">View Calendar</h3>
-                <p className="text-sm text-blue-gray">Check your upcoming sessions and schedule</p>
+            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md h-full">
+              <CardContent className="p-4 sm:p-6 text-center">
+                <Calendar className="h-8 w-8 sm:h-12 sm:w-12 text-orange mx-auto mb-3 sm:mb-4" />
+                <h3 className="font-semibold text-dark-blue-gray mb-2 text-sm sm:text-base">View Calendar</h3>
+                <p className="text-xs sm:text-sm text-blue-gray">Check your upcoming sessions and schedule</p>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/student/rewards">
-            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md">
-              <CardContent className="p-6 text-center">
-                <Gift className="h-12 w-12 text-orange mx-auto mb-4" />
-                <h3 className="font-semibold text-dark-blue-gray mb-2">Rewards Center</h3>
-                <p className="text-sm text-blue-gray">Redeem your points for exciting rewards</p>
+            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md h-full">
+              <CardContent className="p-4 sm:p-6 text-center">
+                <Gift className="h-8 w-8 sm:h-12 sm:w-12 text-orange mx-auto mb-3 sm:mb-4" />
+                <h3 className="font-semibold text-dark-blue-gray mb-2 text-sm sm:text-base">Rewards Center</h3>
+                <p className="text-xs sm:text-sm text-blue-gray">Redeem your points for exciting rewards</p>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/student/profile">
-            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md">
-              <CardContent className="p-6 text-center">
-                <User className="h-12 w-12 text-orange mx-auto mb-4" />
-                <h3 className="font-semibold text-dark-blue-gray mb-2">My Profile</h3>
-                <p className="text-sm text-blue-gray">Update your profile and preferences</p>
+            <Card className="border-gray-200 shadow-sm hover-lift cursor-pointer transition-all duration-200 hover:shadow-md h-full sm:col-span-2 lg:col-span-1">
+              <CardContent className="p-4 sm:p-6 text-center">
+                <User className="h-8 w-8 sm:h-12 sm:w-12 text-orange mx-auto mb-3 sm:mb-4" />
+                <h3 className="font-semibold text-dark-blue-gray mb-2 text-sm sm:text-base">My Profile</h3>
+                <p className="text-xs sm:text-sm text-blue-gray">Update your profile and preferences</p>
               </CardContent>
             </Card>
           </Link>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
           {/* Available Tutors */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2">
             <Card className="border-gray-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray text-lg sm:text-xl">
                   <GraduationCap className="h-5 w-5 text-orange" />
                   Available Tutors
                 </CardTitle>
-                <CardDescription className="text-blue-gray">
+                <CardDescription className="text-blue-gray text-sm">
                   Find and book sessions with qualified tutors
                 </CardDescription>
 
                 {/* Search and Filter */}
-                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
                       placeholder="Search tutors or subjects..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-10 text-sm"
                     />
                   </div>
                   <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                    <SelectTrigger className="w-full sm:w-48">
+                    <SelectTrigger className="w-full sm:w-48 text-sm">
                       <SelectValue placeholder="Filter by subject" />
                     </SelectTrigger>
                     <SelectContent>
@@ -498,24 +515,22 @@ export default function StudentDashboard() {
                     {filteredTutors.slice(0, 6).map((tutor) => (
                       <div
                         key={tutor.id}
-                        className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover-lift"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-200 rounded-lg hover-lift gap-4"
                       >
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12">
+                        <div className="flex items-start sm:items-center gap-4 flex-1">
+                          <Avatar className="h-12 w-12 flex-shrink-0">
                             <AvatarImage src={tutor.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
                             <AvatarFallback className="bg-orange text-white">{tutor.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <div>
-                            <h3 className="font-medium text-dark-blue-gray">{tutor.name}</h3>
-                            <div className="flex items-center gap-2 mt-1">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-dark-blue-gray text-sm sm:text-base">{tutor.name}</h3>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
                               <div className="flex items-center gap-1">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm text-blue-gray">{tutor.rating}</span>
+                                <span className="text-xs sm:text-sm text-blue-gray">{tutor.rating}</span>
                               </div>
-                              <span className="text-gray-300">•</span>
-                              <span className="text-sm text-blue-gray">{tutor.totalSessions} sessions</span>
-                              <span className="text-gray-300">•</span>
-                              {/* <span className="text-sm font-medium text-orange">RM{tutor.hourlyRate}/hr</span> */}
+                              <span className="hidden sm:inline text-gray-300">•</span>
+                              <span className="text-xs sm:text-sm text-blue-gray">{tutor.totalSessions} sessions</span>
                             </div>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {tutor.subjects.slice(0, 3).map((subject) => (
@@ -541,8 +556,8 @@ export default function StudentDashboard() {
                             )}
                           </div>
                         </div>
-                        <Link href={`/student/tutor/${tutor.id}`}>
-                          <Button size="sm" className="bg-orange hover:bg-orange-600">
+                        <Link href={`/student/tutor/${tutor.id}`} className="w-full sm:w-auto">
+                          <Button size="sm" className="bg-orange hover:bg-orange-600 w-full sm:w-auto text-sm">
                             View Profile & Book
                           </Button>
                         </Link>
@@ -554,46 +569,54 @@ export default function StudentDashboard() {
             </Card>
           </div>
 
-          {/* Recent Sessions */}
-          <div>
+          {/* Recent Sessions and Performance Insights */}
+          <div className="space-y-6">
+            {/* Recent Sessions */}
             <Card className="border-gray-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray text-lg">
                   <Clock className="h-5 w-5 text-orange" />
                   Recent Sessions
                 </CardTitle>
-                <CardDescription className="text-blue-gray">Your latest tutoring activities</CardDescription>
+                <CardDescription className="text-blue-gray text-sm">Your latest tutoring activities</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentSessions.map((session) => (
-                    <div
-                      key={session.id}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                    >
-                      <div>
-                        <h4 className="font-medium text-dark-blue-gray text-sm">{session.tutorName}</h4>
-                        <p className="text-xs text-blue-gray">{session.subject}</p>
-                        <p className="text-xs text-gray-500">{new Date(session.date).toLocaleDateString()}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={getStatusColor(session.status)} variant="secondary">
-                          {session.status}
-                        </Badge>
-                        {session.rating && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                            <span className="text-xs text-blue-gray">{session.rating}</span>
-                          </div>
-                        )}
-                      </div>
+                <div className="space-y-3">
+                  {recentSessions.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Clock className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-blue-gray">No recent sessions</p>
                     </div>
-                  ))}
+                  ) : (
+                    recentSessions.map((session) => (
+                      <div
+                        key={session.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border border-gray-200 rounded-lg gap-2"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium text-dark-blue-gray text-sm">{session.tutorName}</h4>
+                          <p className="text-xs text-blue-gray">{session.subject}</p>
+                          <p className="text-xs text-gray-500">{new Date(session.date).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex flex-col sm:items-end gap-1">
+                          <Badge className={getStatusColor(session.status)} variant="secondary" className="text-xs">
+                            {session.status}
+                          </Badge>
+                          {session.rating && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                              <span className="text-xs text-blue-gray">{session.rating}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
                 <Link href="/student/calendar">
                   <Button
                     variant="outline"
-                    className="w-full mt-4 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent"
+                    className="w-full mt-4 border-gray-300 text-blue-gray hover:bg-gray-50 bg-transparent text-sm"
                   >
                     View All Sessions
                   </Button>
@@ -602,9 +625,9 @@ export default function StudentDashboard() {
             </Card>
 
             {/* Performance Insights */}
-            <Card className="border-gray-200 shadow-sm mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-dark-blue-gray">
+            <Card className="border-gray-200 shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray text-lg">
                   <TrendingUp className="h-5 w-5 text-orange" />
                   Performance Insights
                 </CardTitle>
@@ -613,11 +636,11 @@ export default function StudentDashboard() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-gray">Favorite Subject</span>
-                    <Badge className="bg-orange-100 text-orange-800">{quickStats.favoriteSubject}</Badge>
+                    <Badge className="bg-orange-100 text-orange-800 text-xs">{quickStats.favoriteSubject}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-gray">Favorite Tutor</span>
-                    <Badge className="bg-blue-100 text-blue-800">{quickStats.favoriteTutor}</Badge>
+                    <Badge className="bg-blue-100 text-blue-800 text-xs">{quickStats.favoriteTutor}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-gray">Completion Rate</span>
