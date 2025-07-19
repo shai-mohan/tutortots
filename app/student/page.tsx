@@ -59,6 +59,7 @@ interface QuickStats {
   upcomingSessions: number
   totalPoints: number
   favoriteSubject: string
+  favoriteTutor: string
 }
 
 export default function StudentDashboard() {
@@ -73,7 +74,8 @@ export default function StudentDashboard() {
     completedSessions: 0,
     upcomingSessions: 0,
     totalPoints: 0,
-    favoriteSubject: "Mathematics",
+    favoriteSubject: "None",
+    favoriteTutor: "None",
   })
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -190,25 +192,76 @@ export default function StudentDashboard() {
             tutorName: tutorMap[s.tutor_id] || "Unknown Tutor",
             subject: s.subject,
             date: s.date,
-            status:
+            status: (
               s.status === "scheduled"
                 ? "upcoming"
                 : s.status === "completed"
                 ? "completed"
-                : "cancelled",
+                : "cancelled"
+            ) as "completed" | "upcoming" | "cancelled",
             rating: feedbackMap[s.id],
           }))
           setRecentSessions(formattedSessions)
         }
 
-        // Set quick stats
-        setQuickStats({
-          totalSessions: 15,
-          completedSessions: 12,
-          upcomingSessions: 3,
-          totalPoints: user.points || 0,
-          favoriteSubject: "Mathematics",
-        })
+        // Fetch real session statistics for the student
+        const { data: allSessionsData, error: allSessionsError } = await supabase
+          .from("sessions")
+          .select("id, status, subject, tutor_id")
+          .eq("student_id", user.id)
+
+        if (allSessionsError) {
+          console.error("Error fetching all sessions:", allSessionsError)
+        } else {
+          const totalSessions = allSessionsData?.length || 0
+          const completedSessions = allSessionsData?.filter(s => s.status === "completed").length || 0
+          const upcomingSessions = allSessionsData?.filter(s => s.status === "scheduled").length || 0
+          
+          // Calculate favorite subject based on completed sessions
+          const subjectCounts = allSessionsData
+            ?.filter(s => s.status === "completed")
+            ?.reduce((acc, session) => {
+              acc[session.subject] = (acc[session.subject] || 0) + 1
+              return acc
+            }, {} as Record<string, number>) || {}
+          
+          const favoriteSubject = Object.keys(subjectCounts).length > 0
+            ? Object.entries(subjectCounts).sort(([,a], [,b]) => b - a)[0][0]
+            : "None"
+
+          // Calculate favorite tutor based on completed sessions
+          const tutorCounts = allSessionsData
+            ?.filter(s => s.status === "completed")
+            ?.reduce((acc, session) => {
+              acc[session.tutor_id] = (acc[session.tutor_id] || 0) + 1
+              return acc
+            }, {} as Record<string, number>) || {}
+          
+          let favoriteTutor = "None"
+          if (Object.keys(tutorCounts).length > 0) {
+            const mostFrequentTutorId = Object.entries(tutorCounts).sort(([,a], [,b]) => b - a)[0][0]
+            // Fetch tutor name
+            const { data: tutorData, error: tutorError } = await supabase
+              .from("profiles")
+              .select("name")
+              .eq("id", mostFrequentTutorId)
+              .single()
+            
+            if (!tutorError && tutorData) {
+              favoriteTutor = tutorData.name
+            }
+          }
+
+          // Set quick stats with real data
+          setQuickStats({
+            totalSessions,
+            completedSessions,
+            upcomingSessions,
+            totalPoints: user.points || 0,
+            favoriteSubject,
+            favoriteTutor,
+          })
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
         toast({
@@ -561,6 +614,10 @@ export default function StudentDashboard() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-gray">Favorite Subject</span>
                     <Badge className="bg-orange-100 text-orange-800">{quickStats.favoriteSubject}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-blue-gray">Favorite Tutor</span>
+                    <Badge className="bg-blue-100 text-blue-800">{quickStats.favoriteTutor}</Badge>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-blue-gray">Completion Rate</span>
