@@ -444,8 +444,18 @@ useEffect(() => {
       </section>
 
       {/* How It Works */}
-      <section id="how-to-start" className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="how-to-start" className="relative py-16 bg-gray-50 overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0 w-full h-full z-0">
+          <img
+            src="/tutortots-background.jpg"
+            alt="Tutortots background"
+            className="w-full h-full object-cover object-center"
+            draggable="false"
+          />
+          <div className="absolute inset-0 bg-white/80" />
+        </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">How Tutortots Works</h2>
             <p className="text-lg text-gray-600">Simple steps to connect with the perfect tutor</p>
