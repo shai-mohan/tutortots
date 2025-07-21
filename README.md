@@ -1,30 +1,37 @@
-# Simple website setup
+<img src="public/logo.png" alt="TutorTots Logo" width="120" />
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+# TutorTots
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/shilyamohan-gmailcoms-projects/v0-simple-website-setup)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/TCU4GMi8sPr)
+[![Website](https://img.shields.io/badge/Visit%20Website-tutortots.vercel.app-blue?style=for-the-badge)](https://tutortots.vercel.app)
 
 ## Overview
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+TutorTots is an interactive platform designed to connect students and tutors from Sunway University, making learning engaging and accessible for everyone.
 
 ## Deployment
 
-Your project is live at:
+The project is live at:
 
-**[https://vercel.com/shilyamohan-gmailcoms-projects/v0-simple-website-setup](https://vercel.com/shilyamohan-gmailcoms-projects/v0-simple-website-setup)**
+**[https://tutortots.vercel.app](https://tutortots.vercel.app)**
 
-## Build your app
+## How to Use
 
-Continue building your app on:
+1. Clone the repository
+2. Install dependencies with your preferred package manager
+3. Start the development server
+4. Visit the website to explore features
 
-**[https://v0.dev/chat/projects/TCU4GMi8sPr](https://v0.dev/chat/projects/TCU4GMi8sPr)**
+## Tech Stack
 
-## How It Works
+- **Framework:** [Next.js](https://nextjs.org/) (App Router, React 19)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **UI Components:** shadcn/ui, Radix UI, Lucide Icons
+- **State & Forms:** React Hook Form, Zod
+- **Database & Auth:** Supabase
+- **Animations:** Framer Motion, Lottie
+- **Charts:** Recharts
+- **Deployment:** Vercel
+---
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+For more information, contact (@shai-mohan).
