@@ -215,8 +215,8 @@ useEffect(() => {
               Connect with Expert Tutors at <span className="text-orange">Tutortots</span>
             </h1>
             <p className="text-lg sm:text-xl text-white mb-8 leading-relaxed max-w-3xl mx-auto">
-              Transform your learning journey with personalized tutoring from Sunway University's finest educators.
-              Book sessions, get expert help, and achieve academic excellence.
+              Transform your learning journey with personalized tutoring from Sunway University's finest tutors.
+              Book sessions, get expert help from peers and achieve academic excellence.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
               <Button
@@ -248,7 +248,7 @@ useEffect(() => {
           <div className="text-center mb-8 lg:mb-12">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Trusted by Students</h2>
             <p className="text-gray-300 text-base sm:text-lg">
-              Join thousands who have transformed their academic journey
+              Join many who have transformed their academic journey
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -335,7 +335,7 @@ useEffect(() => {
                       </div>
                       {/* Back face with description */}
                       <div className="absolute inset-0 bg-white rounded-xl shadow-md flex items-center justify-center px-4 text-center text-blue-gray text-sm [transform:rotateY(180deg)] [backface-visibility:hidden]">
-                        Book sessions that fit your schedule with easy calendar integration
+                        Book sessions that fit your schedule with easy booking tools
                       </div>
                     </div>
                   </div>
@@ -436,7 +436,7 @@ useEffect(() => {
               className="px-6 py-3 bg-orange hover:bg-orange text-white text-base sm:text-lg"
               onClick={() => setShowLoginModal(true)}
             >
-              View More Tutors
+              Log In to View More Tutors
               <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
           </div>
@@ -510,7 +510,7 @@ useEffect(() => {
             Ready to Start Learning?
           </h2>
           <p className="text-lg sm:text-xl text-blue-gray mb-8 max-w-2xl mx-auto">
-            Join thousands of Sunway University students who are already achieving their academic goals.
+            Join the community of Sunway University students who are already achieving their academic goals.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto sm:max-w-none">
             <Button
@@ -525,7 +525,7 @@ useEffect(() => {
             <Button
               size="lg"
               variant="outline"
-              className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-white text-base sm:text-lg bg-transparent"
+              className="px-6 sm:px-8 py-3 border-blue-gray text-blue-gray hover:bg-blue-gray hover:text-orange-500 text-base sm:text-lg bg-transparent"
               onClick={() => setShowLoginModal(true)}
             >
               Sign In
@@ -583,6 +583,16 @@ useEffect(() => {
                 <li>
                   <a href="https://izone.sunway.edu.my/" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors">
                     iZone - Student Portal
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-4">A Capstone Project By:</h3>
+              <ul className="space-y-2 text-gray-300 text-sm">
+                <li>
+                  <a href="https://www.linkedin.com/in/shaillasree-mohan/" target="_blank" rel="noopener noreferrer" className="hover:text-orange transition-colors">
+                  Shaillasree Mohan
                   </a>
                 </li>
               </ul>
