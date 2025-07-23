@@ -29,6 +29,7 @@ import {
   Menu,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { recommendTutors, Tutor as RecTutor } from "@/lib/recommendation";
 
 interface Tutor {
   id: string
@@ -298,6 +299,22 @@ export default function StudentDashboard() {
     setFilteredTutors(filtered)
   }, [tutors, searchTerm, selectedSubject])
 
+  // --- Recommendation logic ---
+  // Use student's favorite subject if available, otherwise default to 'Mathematics'
+  const subjectOfInterest = quickStats.favoriteSubject && quickStats.favoriteSubject !== "None"
+    ? quickStats.favoriteSubject
+    : "Mathematics";
+  // Map tutors to RecTutor type and add isAvailable (always true for verified tutors)
+  const recTutors: RecTutor[] = tutors.map(t => ({
+    id: t.id,
+    name: t.name,
+    subjects: t.subjects,
+    rating: t.rating,
+    numReviews: t.totalSessions, // using totalSessions as a proxy for numReviews
+    isAvailable: true,
+  }));
+  const recommended = recommendTutors(recTutors, subjectOfInterest, 3);
+
   const handleLogout = async () => {
     await logout()
   }
@@ -452,6 +469,82 @@ export default function StudentDashboard() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 sm:gap-8">
+          {/* Recommended Tutors */}
+          <div className="xl:col-span-3">
+            <Card className="border-gray-200 shadow-sm mb-6">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-dark-blue-gray text-lg sm:text-xl">
+                  <Star className="h-5 w-5 text-orange" />
+                  Recommended Tutors
+                </CardTitle>
+                <CardDescription className="text-blue-gray text-sm">
+                  Our system recommends tutors for you based on your favorite subject and tutor performance.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {quickStats.completedSessions === 0 ? (
+                  <div className="text-center py-6">
+                    <Star className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                    <p className="text-sm text-blue-gray">No recommended tutors yet. Start booking sessions to get recommendations!</p>
+                  </div>
+                ) : recommended.length === 0 ? (
+                  <div className="text-center py-6">
+                    <Star className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                    <p className="text-sm text-blue-gray">No recommended tutors found for {subjectOfInterest}.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recommended.map((tutor) => (
+                      <div
+                        key={tutor.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-gray-200 rounded-lg hover-lift gap-4"
+                      >
+                        <div className="flex items-start sm:items-center gap-4 flex-1">
+                          <Avatar className="h-12 w-12 flex-shrink-0">
+                            <AvatarImage src={tutors.find(t => t.id === tutor.id)?.profilePhotoUrl || "/placeholder.svg"} alt={tutor.name} />
+                            <AvatarFallback className="bg-orange text-white">{tutor.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-medium text-dark-blue-gray text-sm sm:text-base">{tutor.name}</h3>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                <span className="text-xs sm:text-sm text-blue-gray">{tutor.rating}</span>
+                              </div>
+                              <span className="hidden sm:inline text-gray-300">•</span>
+                              <span className="text-xs sm:text-sm text-blue-gray">{tutor.numReviews} sessions</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              {tutor.subjects.slice(0, 3).map((subject) => (
+                                <Badge
+                                  key={subject}
+                                  variant="outline"
+                                  className="text-xs border-gray-300 text-blue-gray"
+                                >
+                                  {subject}
+                                </Badge>
+                              ))}
+                              {tutor.subjects.length > 3 && (
+                                <Badge variant="outline" className="text-xs border-gray-300 text-blue-gray">
+                                  +{tutor.subjects.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <Link href={`/student/tutor/${tutor.id}`} className="w-full sm:w-auto">
+                          <Button size="sm" className="bg-orange hover:bg-orange-600 w-full sm:w-auto text-sm">
+                            View Profile & Book
+                          </Button>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Available Tutors */}
           <div className="xl:col-span-2">
             <Card className="border-gray-200 shadow-sm">
