@@ -9,6 +9,22 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { ArrowLeft, Star, MessageSquare, Calendar } from "lucide-react"
 import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination"
 
 interface FeedbackWithSession {
   id: string
@@ -35,11 +51,17 @@ export default function TutorFeedback() {
     averageRating: 0,
     ratingDistribution: [0, 0, 0, 0, 0],
   })
-
   const [sentimentStats, setSentimentStats] = useState({
     sentimentRating: 0,
     totalSentimentFeedback: 0,
   })
+  // Pagination, search, filter state
+  const [search, setSearch] = useState("")
+  const [subjectFilter, setSubjectFilter] = useState("all")
+  const [page, setPage] = useState(1)
+  const pageSize = 5
+  // Use tutor's subjects from user object
+  const subjects = Array.isArray(user?.subjects) ? user.subjects : []
 
   useEffect(() => {
     if (!user || user.role !== "tutor") {
@@ -134,10 +156,32 @@ export default function TutorFeedback() {
     fetchFeedback()
   }, [user, router])
 
+  // Filtered and paginated feedback
+  const filteredFeedback = feedback.filter((item) => {
+    const matchesSearch = item.session.student.name
+      .toLowerCase()
+      .includes(search.toLowerCase())
+    const matchesSubject =
+      subjectFilter === "all" || item.session.subject === subjectFilter
+    return matchesSearch && matchesSubject
+  })
+  const totalPages = Math.ceil(filteredFeedback.length / pageSize) || 1
+  const paginatedFeedback = filteredFeedback.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  )
+  // Reset to page 1 if filter/search changes
+  useEffect(() => {
+    setPage(1)
+  }, [search, subjectFilter])
+
+  // Calculate unique students for feedback
+  const uniqueStudentCount = new Set(feedback.map(f => f.session.student.name)).size
+
   if (!user) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-100">
+    <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <Link href="/tutor">
@@ -153,13 +197,40 @@ export default function TutorFeedback() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 md:px-8 lg:px-16">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
             <MessageSquare className="h-8 w-8 text-orange-500" />
             Student Feedback
           </h1>
           <p className="text-gray-600">View feedback and ratings from your students</p>
+        </div>
+
+        {/* Search and Filter Controls */}
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4 mb-6">
+          <div className="flex-1">
+            <Input
+              placeholder="Search by student name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="text-sm"
+            />
+          </div>
+          <div className="w-full md:w-64">
+            <Select value={subjectFilter} onValueChange={setSubjectFilter}>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue placeholder="Filter by subject" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Subjects</SelectItem>
+                {subjects.map((subject) => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {loading ? (
@@ -169,22 +240,7 @@ export default function TutorFeedback() {
         ) : (
           <>
             {/* Statistics Cards */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <Card className="border-orange-100">
-                <CardContent className="p-6">
-                  <div className="text-2xl font-bold text-orange-600">{stats.totalFeedback}</div>
-                  <p className="text-sm text-gray-600">Total Feedback</p>
-                </CardContent>
-              </Card>
-              <Card className="border-orange-100">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2">
-                    <div className="text-2xl font-bold text-orange-600">{stats.averageRating.toFixed(1)}</div>
-                    <Star className="h-5 w-5 fill-orange-400 text-orange-400" />
-                  </div>
-                  <p className="text-sm text-gray-600">Average Rating</p>
-                </CardContent>
-              </Card>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               <Card className="border-orange-100">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2">
@@ -199,30 +255,10 @@ export default function TutorFeedback() {
                   </p>
                 </CardContent>
               </Card>
-
               <Card className="border-orange-100">
                 <CardContent className="p-6">
-                  <div className="space-y-1">
-                    {[5, 4, 3, 2, 1].map((rating) => (
-                      <div key={rating} className="flex items-center gap-2 text-xs">
-                        <span className="w-3">{rating}</span>
-                        <Star className="h-3 w-3 fill-orange-400 text-orange-400" />
-                        <div className="flex-1 bg-gray-200 rounded-full h-1">
-                          <div
-                            className="bg-orange-500 h-1 rounded-full"
-                            style={{
-                              width: `${
-                                stats.ratingDistribution[rating - 1] > 0
-                                  ? (stats.ratingDistribution[rating - 1] / stats.totalFeedback) * 100
-                                  : 0
-                              }%`,
-                            }}
-                          />
-                        </div>
-                        <span className="w-6 text-right">{stats.ratingDistribution[rating - 1]}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <div className="text-2xl font-bold text-orange-600">{uniqueStudentCount}</div>
+                  <p className="text-sm text-gray-600">Unique Students Gave Feedback</p>
                 </CardContent>
               </Card>
             </div>
@@ -230,19 +266,19 @@ export default function TutorFeedback() {
             {/* Feedback List */}
             <div>
               <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Feedback</h2>
-              {feedback.length === 0 ? (
+              {filteredFeedback.length === 0 ? (
                 <Card className="border-orange-100">
                   <CardContent className="text-center py-8">
                     <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No feedback received yet.</p>
+                    <p className="text-gray-500">No feedback found.</p>
                     <p className="text-sm text-gray-400 mt-2">
-                      Complete some tutoring sessions to start receiving feedback from students.
+                      Try adjusting your search or filter.
                     </p>
                   </CardContent>
                 </Card>
               ) : (
                 <div className="space-y-4">
-                  {feedback.map((item) => (
+                  {paginatedFeedback.map((item) => (
                     <Card key={item.id} className="border-orange-100 hover:border-orange-200 transition-colors">
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -268,9 +304,7 @@ export default function TutorFeedback() {
                                 {Array.from({ length: 5 }).map((_, i) => (
                                   <Star
                                     key={i}
-                                    className={`h-4 w-4 ${
-                                      i < item.rating! ? "fill-orange-400 text-orange-400" : "text-gray-300"
-                                    }`}
+                                    className={`h-4 w-4 ${i < item.rating! ? "fill-orange-400 text-orange-400" : "text-gray-300"}`}
                                   />
                                 ))}
                               </div>
@@ -288,6 +322,49 @@ export default function TutorFeedback() {
                       )}
                     </Card>
                   ))}
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="pt-6 flex justify-center">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage((p) => Math.max(1, p - 1))
+                              }}
+                              aria-disabled={page === 1}
+                            />
+                          </PaginationItem>
+                          {Array.from({ length: totalPages }).map((_, i) => (
+                            <PaginationItem key={i}>
+                              <PaginationLink
+                                href="#"
+                                isActive={page === i + 1}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  setPage(i + 1)
+                                }}
+                              >
+                                {i + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          <PaginationItem>
+                            <PaginationNext
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPage((p) => Math.min(totalPages, p + 1))
+                              }}
+                              aria-disabled={page === totalPages}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
