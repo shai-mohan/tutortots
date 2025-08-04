@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Tutortots",
   description: "Connect with tutors at Sunway University",
-  generator: "v0.dev",
+  
   icons: {
     icon: '/icon.png',
     shortcut: '/favicon.ico',
